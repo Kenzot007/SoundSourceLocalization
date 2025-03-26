@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import correlate
 from auditory_model import Audiotory_peripheral, Haircell_model
 
 def Efficient_ccf(left_signal, right_signal):
@@ -38,9 +39,14 @@ def calculate_itd(signal, fs, max_delay=None, inter_method='exponential'):
     if max_delay is None:
         max_delay = int(1e-3 * fs)  # 1ms delay (typical human ITD max)
 
-    # frequency domain
-    ccf_full = Efficient_ccf(signal_detrend[:, 0], signal_detrend[:, 1])
-    ccf = ccf_full[signal_len-1-max_delay : signal_len+max_delay]
+    if False:
+        # frequency domain
+        ccf_full = Efficient_ccf(signal_detrend[:, 0], signal_detrend[:, 1])
+        ccf = ccf_full[signal_len-1-max_delay : signal_len+max_delay]
+    else:
+        # time domain
+        ccf_full = np.correlate(signal_detrend[:, 0], signal_detrend[:, 1], mode='full')
+        ccf = ccf_full[signal_len - 1 - max_delay:signal_len + max_delay]
 
     energy_left = np.sum(signal_detrend[:, 0] ** 2)
     energy_right = np.sum(signal_detrend[:, 1] ** 2)
@@ -82,7 +88,7 @@ def calculate_ild(signal):
     rms_left = np.sqrt(np.mean(np.power(signal[:, 0], 2))) + np.finfo(float).eps
     rms_right = np.sqrt(np.mean(np.power(signal[:, 1], 2))) + np.finfo(float).eps
 
-    # 计算 ILD
+    # calculate ILD
     ild = 20 * np.log10(rms_left / rms_right)
 
     return ild
@@ -128,18 +134,36 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None, max
     spatial_cues = np.zeros((freq_chann_num, frame_num, 2), dtype=np.float32)  # [itd_frame,ild_frame]
     ccf_std_all = np.zeros((freq_chann_num, frame_num, max_delay * 2 + 1), dtype=np.float32)
 
-    for freq_chann_i in range(freq_chann_num):
-        for frame_i in range(frame_num):
-            frame_start_pos = frame_i * frame_shift + frame_len
-            frame_end_pos = frame_start_pos + frame_len
+    # for freq_chann_i in range(freq_chann_num):
+    #     for frame_i in range(frame_num):
+    #         frame_start_pos = frame_i * frame_shift + frame_len
+    #         frame_end_pos = frame_start_pos + frame_len
+    #
+    #         tar_chann_frame = signal_env[freq_chann_i, frame_start_pos:frame_end_pos, :]
+    #
+    #         # calculate ITD and ILD
+    #         itd_frame, ccf_std_frame = calculate_itd(tar_chann_frame, fs, max_delay=max_delay)
+    #         ild_frame = calculate_ild(tar_chann_frame)
+    #
+    #         # check whether ILD is valid
+    #         if ild_frame == np.inf:
+    #             print(freq_chann_i, frame_i)
+    #             raise Exception('invalid ild')
+    #
+    #         spatial_cues[freq_chann_i, frame_i, 0] = itd_frame
+    #         spatial_cues[freq_chann_i, frame_i, 1] = ild_frame
+    #         ccf_std_all[freq_chann_i, frame_i, :] = ccf_std_frame
 
+    for frame_i in range(frame_num):
+        frame_start_pos = frame_i * frame_shift + frame_len
+        frame_end_pos = frame_start_pos + frame_len
+
+        for freq_chann_i in range(freq_chann_num):
             tar_chann_frame = signal_env[freq_chann_i, frame_start_pos:frame_end_pos, :]
 
-            # calculate ITD and ILD
             itd_frame, ccf_std_frame = calculate_itd(tar_chann_frame, fs, max_delay=max_delay)
             ild_frame = calculate_ild(tar_chann_frame)
 
-            # check whether ILD is valid
             if ild_frame == np.inf:
                 print(freq_chann_i, frame_i)
                 raise Exception('invalid ild')
@@ -152,7 +176,6 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None, max
 
 
 
-# 噪声环境下提取cues
 def GetCues(tar, interfer, fs, frame_len, filter_type, cfs, frame_shift=None, max_delay=None, ihc_type=None):
     """calculate binaural localization cues, [itds,ilds,ccfs]
 

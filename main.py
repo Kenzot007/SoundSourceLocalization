@@ -23,9 +23,9 @@ def main():
     # Load signal and visualize
     # signal, fs = load_audio('audio/sin/sin_270°.wav')
     # signal, fs = load_audio('audio1/bin_prox_dir/split1_ov1_2.flac')
-    signal, fs = load_audio('stereo_5000Hz_left_440Hz_right.wav')
+    # ignal, fs = load_audio('stereo_5000Hz_left_440Hz_right.wav')
     #signal, fs = load_audio('audio/impulse/impulse_270°.wav')
-    #signal, fs = load_audio('audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
+    signal, fs = load_audio('audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
     #signal, fs = load_audio('noisy_market1.wav')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]

@@ -161,6 +161,7 @@ def Audiotory_peripheral(signal, fs, cfs, filter_type, model_type=None):
     if model_type == None:
         env = audiogram
     else:
-        env = Haircell_model(audiogram, fs, model_type)
+        # env = Haircell_model(audiogram, fs, model_type)
+        env = audiogram
 
     return [audiogram, env]
