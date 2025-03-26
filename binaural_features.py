@@ -121,7 +121,8 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None, max
     freq_chann_num = len(cfs)
     _, signal_env = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
 
-    frame_num = int((signal_len - frame_len - frame_len) / frame_shift + 1)
+    #frame_num = int((signal_len - frame_len - frame_len) / frame_shift + 1)
+    frame_num = (signal_len - frame_len) // frame_shift
 
     # initialize matrix for ITD and ILD
     spatial_cues = np.zeros((freq_chann_num, frame_num, 2), dtype=np.float32)  # [itd_frame,ild_frame]

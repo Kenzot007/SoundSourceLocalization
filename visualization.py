@@ -156,11 +156,11 @@ def visualize_spatial_cues(spatial_cues, nonlinearity="log"):
 
 def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
     """
-    绘制所有 Gammatone 滤波后的信号的 Spectrogram 时频图，排列在一个大图中。
+    Plot the spectrograms of all gammatone filtered signals, arranged in one large graph.
 
-    :param left_audiogram: 形状 (num_filters, num_samples) 的 Gammatone 处理后的信号
-    :param fs: 采样率
-    :param num_cols: 每行显示的滤波通道数（默认 4）
+    :param left_audiogram: num_filters, num_samples
+    :param fs: samping rate
+    :param num_cols: Number of filter channels displayed per line (Default: 4)
     """
     num_filters, num_samples = left_audiogram.shape
     num_rows = int(np.ceil(num_filters / num_cols))  # 计算行数
@@ -171,7 +171,7 @@ def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
     for i in range(num_filters):
         f, t, Sxx = sp.spectrogram(left_audiogram[i], fs, nperseg=256)
         axes[i].pcolormesh(t, f, 10 * np.log10(Sxx + 1e-10), shading='auto', cmap='magma')
-        axes[i].set_title(f'Filter {i + 1}')
+        axes[i].set_title(f'Filter {i}')
         axes[i].set_ylabel('Freq (Hz)')
 
     # 隐藏多余的 subplot
@@ -185,11 +185,11 @@ def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
 
 def plot_right_audiogram_spectrogram(right_audiogram, fs, num_cols=4):
     """
-    绘制所有 Gammatone 滤波后的信号的 Spectrogram 时频图，排列在一个大图中。
+    Plot the spectrograms of all gammatone filtered signals, arranged in one large graph.
 
-    :param left_audiogram: 形状 (num_filters, num_samples) 的 Gammatone 处理后的信号
-    :param fs: 采样率
-    :param num_cols: 每行显示的滤波通道数（默认 4）
+    :param left_audiogram: num_filters, num_samples
+    :param fs: samping rate
+    :param num_cols: Number of filter channels displayed per line (Default: 4)
     """
     num_filters, num_samples = right_audiogram.shape
     num_rows = int(np.ceil(num_filters / num_cols))  # 计算行数
@@ -200,7 +200,7 @@ def plot_right_audiogram_spectrogram(right_audiogram, fs, num_cols=4):
     for i in range(num_filters):
         f, t, Sxx = sp.spectrogram(right_audiogram[i], fs, nperseg=256)
         axes[i].pcolormesh(t, f, 10 * np.log10(Sxx + 1e-10), shading='auto', cmap='magma')
-        axes[i].set_title(f'Filter {i + 1}')
+        axes[i].set_title(f'Filter {i}')
         axes[i].set_ylabel('Freq (Hz)')
 
     # 隐藏多余的 subplot

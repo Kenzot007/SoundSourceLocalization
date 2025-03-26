@@ -22,7 +22,8 @@ def main():
     """
     # Load signal and visualize
     # signal, fs = load_audio('audio/sin/sin_270°.wav')
-    signal, fs = load_audio('sin_1000Hz.wav')
+    # signal, fs = load_audio('audio1/bin_prox_dir/split1_ov1_2.flac')
+    signal, fs = load_audio('stereo_5000Hz_left_440Hz_right.wav')
     #signal, fs = load_audio('audio/impulse/impulse_270°.wav')
     #signal, fs = load_audio('audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
     #signal, fs = load_audio('noisy_market1.wav')
@@ -62,7 +63,7 @@ def main():
 
     # visualize itd and ild
     # choose a certain frequency channel from ccfs.
-    freq_channel_index = 21
+    freq_channel_index = 10
     itd_data = spatial_cues[freq_channel_index, :, 0]   # ITD
     ild_data = spatial_cues[freq_channel_index, :, 1]   # ILD
     frames = np.arange(itd_data.shape[0])
