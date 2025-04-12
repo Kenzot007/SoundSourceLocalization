@@ -70,6 +70,21 @@ def calculate_itd(signal, fs, max_delay=None, inter_method='exponential'):
     ITD = float((max_pos - max_delay - 1 + delta)) / fs * 1e3
     return [ITD, ccf_std]  # ITD(ms)
 
+# def calculate_itd_ic(signal, fs, alpha=0.002, max_delay=None):
+#     x1 = signal[:, 0]
+#     x2 = signal[:, 1]
+#     N = len(x1)
+#     max_lag = int(fs * max_delay/1000)
+#     lags = np.arange(-max_lag, max_lag + 1)
+#
+#     a11 = np.zeros((N, len(lags)))
+#     a22 = np.zeros_like(a11)
+#     a12 = np.zeros_like(a11)
+#     gamma = np.zeros_like(a11)
+#     tau = np.zeros(N)
+#     c12 = np.zeros(N)
+
+
 def calculate_ild(signal):
     """ ILD
         To be consistent with ITD:

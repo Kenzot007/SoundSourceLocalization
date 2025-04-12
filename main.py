@@ -21,32 +21,13 @@ def main():
         order of gammatone filter: 4
     """
     # Load signal and visualize
-    # signal, fs = load_audio('audio/sin/sin_270°.wav')
-    # signal, fs = load_audio('audio1/bin_prox_dir/split1_ov1_2.flac')
-    # ignal, fs = load_audio('stereo_5000Hz_left_440Hz_right.wav')
-    #signal, fs = load_audio('audio/impulse/impulse_270°.wav')
     signal, fs = load_audio('audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
-    #signal, fs = load_audio('noisy_market1.wav')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]
     t = np.arange(0, len(left_signal)) / fs
     visualize_time(left_signal, right_signal, t, duration=0.05)
     visualize_frequency(left_signal, right_signal, fs)
 
-    # filtered_signal = lowpass_filter(signal, fs, cutoff=3000, order=10)
-    # filtered_left_signal = filtered_signal[:, 0]
-    # filtered_right_signal = filtered_signal[:, 1]
-    # visualize_time(filtered_left_signal, filtered_right_signal, t, duration=0.05)
-    # visualize_frequency(filtered_left_signal, filtered_right_signal, fs)
-
-    #signal = librosa.resample(signal.T, orig_sr=fs, target_sr=16000).T
-    #fs_resampled = fs
-    #visual_binary(fs_resampled, signal[:, 0], signal[:, 1])
-
-    # num_freqs = 32
-    # min_freq = 80
-    # max_freq = 5000
-    # cfs = erb_space(min_freq, max_freq, num_freqs)
     filter_type = 'Gammatone'
     cfs = gt_filters.centre_freqs(cutoff=80, fs=fs, num_freqs=32)
 
@@ -56,7 +37,7 @@ def main():
                                      frame_shift=int(fs * 0.023 * 0.5), # 50% overlap
                                      signal=signal, fs=fs,
                                      max_delay=int(fs * 0.001),
-                                     ihc_type='Roman')
+                                     ihc_type='Christof')
 
     # visualize ccf
     # visualize_ccf(left_signal, right_signal, fs)
