@@ -31,10 +31,11 @@ def main():
     filter_type = 'Gammatone'
     cfs = gt_filters.centre_freqs(cutoff=80, fs=fs, num_freqs=32)
 
-    spatial_cues, ccf = GetCues_clean(cfs=cfs,
+    frame_len = int(fs * 0.032)
+    spatial_cues, gamma_all, ics_all = GetCues_clean(cfs=cfs,
                                      filter_type=filter_type,
-                                     frame_len=int(fs * 0.023),
-                                     frame_shift=int(fs * 0.023 * 0.5), # 50% overlap
+                                     frame_len=frame_len,
+                                     frame_shift=int(frame_len * 0.5), # 50% overlap
                                      signal=signal, fs=fs,
                                      max_delay=int(fs * 0.001),
                                      ihc_type='Christof')
@@ -47,9 +48,35 @@ def main():
     freq_channel_index = 10
     itd_data = spatial_cues[freq_channel_index, :, 0]   # ITD
     ild_data = spatial_cues[freq_channel_index, :, 1]   # ILD
+    ic_data = ics_all[freq_channel_index, :]
     frames = np.arange(itd_data.shape[0])
+
     visualize_binary_cues(itd_data, ild_data, frames)
     visualize_spatial_cues(spatial_cues, nonlinearity="log")
+
+    plt.figure()
+    plt.plot(frames, ic_data)
+    plt.title(f"IC over time (channel {freq_channel_index})")
+    plt.xlabel("Frame index")
+    plt.ylabel("IC (max cross-correlation)")
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+    # ✅ 可选：画某一帧的 γ(n, m) 曲线
+    # example: visualize gamma at a frame
+    frame_idx = 20
+    gamma_curve = gamma_all[freq_channel_index, frame_idx, :]
+    lags = np.arange(-int(fs * 0.001), int(fs * 0.001) + 1) * 1000 / fs  # in ms
+
+    plt.figure()
+    plt.plot(lags, gamma_curve)
+    plt.title(f"Normalized Cross-Correlation γ(n, m) @ frame {frame_idx}")
+    plt.xlabel("Delay (ms)")
+    plt.ylabel("γ")
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
 
     #scipy.io.savemat("spatial_cues.mat", {'spatial_cues': spatial_cues})
     #print("Spatial cues saved")
