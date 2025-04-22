@@ -21,7 +21,7 @@ def main():
         order of gammatone filter: 4
     """
     # Load signal and visualize
-    signal, fs = load_audio('audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
+    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/audio/subject_003/sin_az90_el0_snr20.0dB.wav')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]
     t = np.arange(0, len(left_signal)) / fs
@@ -63,7 +63,6 @@ def main():
     plt.tight_layout()
     plt.show()
 
-    # ✅ 可选：画某一帧的 γ(n, m) 曲线
     # example: visualize gamma at a frame
     frame_idx = 20
     gamma_curve = gamma_all[freq_channel_index, frame_idx, :]

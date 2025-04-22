@@ -34,16 +34,17 @@ def calculate_itd(signal, fs, max_delay=None, inter_method='exponential', alpha=
             inter_method: method of ccf interpolation, "None"(default),"parabolic","exponential".
             alpha: smoothness factor
         """
-    signal_len = signal.shape[0]
-    signal_detrend = signal - np.mean(signal, axis=0)   # x_detrend = x - np.mean(x, axis=0)
-
     if max_delay is None:
         max_delay = int(1e-3 * fs)  # 1ms delay (typical human ITD max)
 
-    x1 = signal[:, 0]
-    x2 = signal[:, 1]
+    signal = signal - np.mean(signal, axis=0)   # x_detrend = x - np.mean(x, axis=0)
+
+    x1, x2 = signal[:, 0], signal[:, 1]
     N = len(x1)
+
+    # FFT cross-correlation
     lags = np.arange(-max_delay, max_delay + 1)
+    
     gamma = np.zeros(len(lags))
 
     a11 = np.zeros(len(lags))
@@ -70,38 +71,6 @@ def calculate_itd(signal, fs, max_delay=None, inter_method='exponential', alpha=
     max_idx = np.argmax(gamma)
     IC = gamma[max_idx]
     ITD = lags[max_idx] / fs * 1e3
-
-    # if False:
-    #     # frequency domain
-    #     ccf_full = Efficient_ccf(signal_detrend[:, 0], signal_detrend[:, 1])
-    #     ccf = ccf_full[signal_len-1-max_delay : signal_len+max_delay]
-    # else:
-    #     # time domain
-    #     ccf_full = np.correlate(signal_detrend[:, 0], signal_detrend[:, 1], mode='full')
-    #     ccf = ccf_full[signal_len - 1 - max_delay:signal_len + max_delay]
-    #
-    # energy_left = np.sum(signal_detrend[:, 0] ** 2)
-    # energy_right = np.sum(signal_detrend[:, 1] ** 2)
-    # ccf_std = ccf / np.sqrt(energy_left * energy_right) + 1e-10
-    # max_pos = np.argmax(ccf)  # Optimal delay in signal alignment between the left and right ears
-    #
-    # # exponential interpolation
-    # delta = 0
-    # if inter_method == 'exponential':
-    #     if max_pos > 0 and max_pos < max_delay * 2 - 2:
-    #         if np.min(ccf[max_pos - 1:max_pos + 2]) > 0:
-    #             delta = (np.log10(ccf[max_pos + 1]) - np.log10(ccf[max_pos - 1])) / \
-    #                     (4 * np.log10(ccf[max_pos]) -
-    #                     2 * np.log10(ccf[max_pos - 1]) -
-    #                     2 * np.log10(ccf[max_pos + 1]))
-    # elif inter_method == 'parabolic':
-    #     if max_pos > 0 and max_pos < max_delay * 2 - 2:
-    #         delta = (ccf[max_pos - 1] - ccf[max_pos + 1]) / (
-    #                     2 * (ccf[max_pos + 1] - 2 * ccf[max_pos] + ccf[max_pos - 1]))
-    #
-    # ITD = float((max_pos - max_delay - 1 + delta)) / fs * 1e3
-    # IC = np.max(ccf_std)
-    # return [ITD, ccf_std, IC]  # ITD(ms)
     return ITD, IC, gamma
 
 def calculate_ild(signal):
