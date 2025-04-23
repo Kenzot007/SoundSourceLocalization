@@ -21,7 +21,7 @@ def main():
         order of gammatone filter: 4
     """
     # Load signal and visualize
-    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/audio/subject_003/sin_az90_el0_snr20.0dB.wav')
+    signal, fs = load_audio('/Users/mousei/Documents/GitHub/BinauralLocalizationCNN_tf2/audio1/bin_prox_dir/split1_ov1_1.flac')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]
     t = np.arange(0, len(left_signal)) / fs

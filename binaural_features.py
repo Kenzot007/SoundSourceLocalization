@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.signal import correlate
 from auditory_model import Audiotory_peripheral, Haircell_model
 
 def Efficient_ccf(left_signal, right_signal):
@@ -18,171 +17,127 @@ def Efficient_ccf(left_signal, right_signal):
 
     return ccf
 
-def calculate_itd(signal, fs, max_delay=None, inter_method='exponential', alpha=0.9):
+def calculate_itd(signal, fs, max_delay=None, alpha=0.1):
+    """Efficient ITD & IC estimation (single frame, two‑channel signal)
+
+    Parameters
+    ----------
+    signal : ndarray, shape (L, 2)
+        Left / right ear samples for the current frame.
+    fs : int or float
+        Sampling frequency [Hz].
+    max_delay : int, optional
+        Maximum ITD (in *samples*) to scan on each side; defaults to 1 ms.
+    alpha : float, optional
+        Exponential smoothing factor (0‥1).  Smaller => slower/steadier.
+
+    Returns
+    -------
+    itd : float
+        Interaural time difference [ms] of this frame.
+    ic : float
+        Interaural coherence (max of the normalised correlation curve).
+    gamma : ndarray, shape (2*max_delay+1,)
+        The full normalised cross‑correlation function.
     """
-        estimate ITD based on interaural corss-correlation function
-        itd = chann0_delay - chann1_delay
-        x_detrend[:, 0]: left ear signal, x_trend[:, 1]: right ear signal
-        corr(i) = sum(x0[t]*x1[t-i])
-            | >0 chann1 lead
-        itd |
-            | <0 chann0 lead
+    if signal.ndim != 2 or signal.shape[1] != 2:
+        raise ValueError("`signal` must be (N,2) stereo frame")
 
-        Args:
-            signal: Input binaural audio signal, shape = (num_samples, 2)
-            max_delay: maximum value of ITD, which equals sampling rate * maximum delay(s), default value: 1ms
-            inter_method: method of ccf interpolation, "None"(default),"parabolic","exponential".
-            alpha: smoothness factor
-        """
     if max_delay is None:
-        max_delay = int(1e-3 * fs)  # 1ms delay (typical human ITD max)
+        max_delay = int(1e-3 * fs)  # ±1 ms by default
 
-    signal = signal - np.mean(signal, axis=0)   # x_detrend = x - np.mean(x, axis=0)
+    xL = np.ascontiguousarray(signal[:, 0], dtype=float)
+    xR = np.ascontiguousarray(signal[:, 1], dtype=float)
+    N = xL.size
+    D = max_delay
 
-    x1, x2 = signal[:, 0], signal[:, 1]
-    N = len(x1)
+    # Pre‑pad right channel once so we can vectorised‑index all lags
+    xR_pad = np.pad(xR, (D, D))
+    lags = np.arange(-D, D + 1)
+    K = lags.size  # = 2D+1
 
-    # FFT cross-correlation
-    lags = np.arange(-max_delay, max_delay + 1)
-    
-    gamma = np.zeros(len(lags))
+    # State vectors for exponentially‑weighted running correlator
+    cross = np.zeros(K)
+    eL = np.full(K, 1e-40)   # avoid divide‑by‑zero
+    eR = np.full(K, 1e-40)
 
-    a11 = np.zeros(len(lags))
-    a12 = np.zeros(len(lags))
-    a22 = np.zeros(len(lags))
+    for n in range(N):
+        # Current sample values
+        sL = xL[n]
+        idx_R = lags + n + D   # shift indices for padded R channel
+        sR_vec = xR_pad[idx_R]
 
-    for i, m in enumerate(lags):
-        for n in range(N):
-            i1 = n-m if m < 0 else n
-            i2 = n+m if m > 0 else n
+        # Recursive update (vectorised over all lags)
+        cross = (1 - alpha) * cross + alpha * (sL * sR_vec)
+        eL = (1 - alpha) * eL + alpha * (sL ** 2)
+        eR = (1 - alpha) * eR + alpha * (sR_vec ** 2)
 
-            if i1 < 0 or i1 >= N or i2 < 0 or i2 >= N:
-                continue
+    # Normalised cross‑correlation (gamma)
+    denom = np.sqrt(eL * eR) + 1e-20
+    gamma = cross / denom
 
-            x1n = x1[i1]
-            x2n = x2[i2]
-
-            a11[i] = alpha * (x1n ** 2) + (1 - alpha) * a11[i]
-            a12[i] = alpha * (x1n * x2n) + (1 - alpha) * a12[i]
-            a22[i] = alpha * (x2n ** 2) + (1 - alpha) * a22[i]
-
-        gamma[i] = a12[i] / (np.sqrt(a11[i] * a22[i]) + 1e-12)  # Y(n,m)
-
-    max_idx = np.argmax(gamma)
-    IC = gamma[max_idx]
-    ITD = lags[max_idx] / fs * 1e3
-    return ITD, IC, gamma
+    best_idx = int(np.argmax(gamma))
+    ic = float(gamma[best_idx])
+    itd = (lags[best_idx] / fs) * 1e3  # convert to ms
+    return itd, ic, gamma
 
 def calculate_ild(signal):
-    """ ILD
-        To be consistent with ITD:
-        ild = 10log10(chann0_energy/chann1_energy)
-            |>0 chann0 lead(left ear)
-        ild |
-            |<0 chann1 lead(right ear)
-    """
+    """Compute ILD [dB] for a stereo frame."""
+    if signal.ndim != 2 or signal.shape[1] != 2:
+        raise ValueError("`signal` must be (N,2) stereo frame")
+    eps = np.finfo(float).eps
+    rms_left = np.sqrt(np.mean(signal[:, 0] ** 2)) + eps
+    rms_right = np.sqrt(np.mean(signal[:, 1] ** 2)) + eps
+    return 20.0 * np.log10(rms_left / rms_right)
 
-    rms_left = np.sqrt(np.mean(np.power(signal[:, 0], 2))) + np.finfo(float).eps
-    rms_right = np.sqrt(np.mean(np.power(signal[:, 1], 2))) + np.finfo(float).eps
+def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None,
+                   max_delay=None, ihc_type=None, c0=0.98):
+    """Compute ITD, ILD, IC cues per critical‑band frame (vectorised ITD)."""
+    from auditory_model import Audiotory_peripheral  # keep existing front‑end
 
-    # calculate ILD
-    ild = 20 * np.log10(rms_left / rms_right)
+    if frame_shift is None:
+        frame_shift = frame_len // 2
+    if max_delay is None:
+        max_delay = int(1e-3 * fs)
 
-    return ild
+    # Auditory periphery → envelope (freq_ch, N, 2)
+    _, env = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
+    N = signal.shape[0]
+    frame_num = (N - frame_len) // frame_shift
+    F = len(cfs)
 
-def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None, max_delay=None, ihc_type=None):
-    """calculate binaural localization cues, [itds,ilds,ccfs]
+    spatial_cues = np.zeros((F, frame_num, 2), dtype=np.float32)
+    gamma_all = np.zeros((F, frame_num, 2 * max_delay + 1), dtype=np.float32)
+    ics_all = np.zeros((F, frame_num), dtype=np.float32)
 
-    Args:
-        signal: target signal
-        fs: sample frequency
-        frame_len:
-        filter_type: "Gammatone" / "Butterworth"
-        cfs: center frequencies of filters
-        frame_shift: default frame_len/2
-        max_daly: the maximum delay(sample), default frame_len-1
-        ihc_type: different model used in previous work
-            Lindemann: half-wave rectify + low-pass filter(1th Butterworth, cutoff-frequency 800Hz)
-            Breebart: half-wave rectify + low-pass filter(5th, cutoff-frequency 770Hz)
-            More to added....
-    Returns:
-        [[itds,ilds],ccfs]
-        spatial_cues: shape = (freq_chann_num, frame_num, 2) [ITD, ILD]
-        ccf_std_all: shape = (freq_chann_num, frame_num, max_delay*2 + 1)
-    """
+    # Energy threshold (5th percentile of RMS)
+    frame_rms = []
+    for fi in range(frame_num):
+        s = fi * frame_shift
+        e = s + frame_len
+        frame_rms.extend(np.sqrt(np.mean(env[:, s:e, :] ** 2, axis=2)).ravel())
+    thr = np.percentile(frame_rms, 5)
 
-    signal_len = signal.shape[0]
-    rms_all = np.sqrt(np.mean(signal ** 2))
-
-    if frame_len > 2*signal_len:
-        frame_len = signal_len // 2
-        frame_shift = int(frame_len / 2)
-        max_delay = frame_len - 1
-        print('frame_len too big, automatically shrunk its value')
-
-    # filtered signal
-    #freq_chann_num = cfs.shape[0]
-    freq_chann_num = len(cfs)
-    _, signal_env = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
-
-    #frame_num = int((signal_len - frame_len - frame_len) / frame_shift + 1)
-    frame_num = (signal_len - frame_len) // frame_shift
-
-    # initialize matrix for ITD and ILD
-    spatial_cues = np.zeros((freq_chann_num, frame_num, 2), dtype=np.float32)  # [itd_frame,ild_frame]
-    #ccf_std_all = np.zeros((freq_chann_num, frame_num, max_delay * 2 + 1), dtype=np.float32)
-    gamma_all = np.zeros((freq_chann_num, frame_num, max_delay*2 + 1), dtype=np.float32)
-    ics_all = np.zeros((freq_chann_num, frame_num), dtype=np.float32)
-
-    alpha = 0.9
-
-    frame_rms_list = []
-    for frame_i in range(frame_num):
-        frame_start_pos = frame_i * frame_shift + frame_len
-        frame_end_pos = frame_start_pos + frame_len
-        for freq_chann_i in range(freq_chann_num):
-            tar_chann_frame = signal_env[freq_chann_i, frame_start_pos:frame_end_pos, :]
-            # calculate left and right energy
-            left_energy = np.sqrt(np.mean(tar_chann_frame[:, 0] ** 2))
-            right_energy = np.sqrt(np.mean(tar_chann_frame[:, 1] ** 2))
-            energy_avg = (left_energy + right_energy) / 2
-            frame_rms_list.append(energy_avg)
-    energy_threshold = np.percentile(frame_rms_list, 5)
-
-    for frame_i in range(frame_num):
-        frame_start_pos = frame_i * frame_shift + frame_len
-        frame_end_pos = frame_start_pos + frame_len
-
-        for freq_chann_i in range(freq_chann_num):
-            tar_chann_frame = signal_env[freq_chann_i, frame_start_pos:frame_end_pos, :]
-
-            left_energy = np.sqrt(np.mean(tar_chann_frame[:, 0] ** 2))
-            right_energy = np.sqrt(np.mean(tar_chann_frame[:, 1] ** 2))
-            energy_avg = (left_energy + right_energy) / 2
-            if energy_avg < energy_threshold:
-                continue    # skip this frame
-
-            # calculate ITD and ILD
-            itd_frame, ic_frame, gamma = calculate_itd(tar_chann_frame, fs, max_delay=max_delay)
-            ild_frame = calculate_ild(tar_chann_frame)
-
-            if ild_frame == np.inf:
-                print(freq_chann_i, frame_i)
-                raise Exception('invalid ild')
-
-            # EMA
-            if frame_i > 0:
-                spatial_cues[freq_chann_i, frame_i, 0] = alpha * itd_frame + (1-alpha) * spatial_cues[freq_chann_i, frame_i - 1, 0]
-                spatial_cues[freq_chann_i, frame_i, 1] = alpha * ild_frame + (1-alpha) * spatial_cues[freq_chann_i, frame_i - 1, 1]
+    alpha_ema = 0.9
+    for fi in range(frame_num):
+        s = fi * frame_shift
+        e = s + frame_len
+        for ch in range(F):
+            frame = env[ch, s:e, :]
+            if np.sqrt(np.mean(frame ** 2)) < thr:
+                continue  # skip low‑energy frame
+            itd, ic, gamma = calculate_itd(frame, fs, max_delay)
+            if ic < c0:
+                continue  # IC gating
+            ild = calculate_ild(frame)
+            if fi > 0:
+                spatial_cues[ch, fi, 0] = alpha_ema * itd + (1 - alpha_ema) * spatial_cues[ch, fi - 1, 0]
+                spatial_cues[ch, fi, 1] = alpha_ema * ild + (1 - alpha_ema) * spatial_cues[ch, fi - 1, 1]
             else:
-                spatial_cues[freq_chann_i, frame_i, 0] = itd_frame
-                spatial_cues[freq_chann_i, frame_i, 1] = ild_frame
-
-            # cross-correlation function
-            ics_all[freq_chann_i, frame_i] = ic_frame
-            gamma_all[freq_chann_i, frame_i, :] = gamma
+                spatial_cues[ch, fi] = [itd, ild]
+            gamma_all[ch, fi] = gamma
+            ics_all[ch, fi] = ic
     return [spatial_cues, gamma_all, ics_all]
-
 
 
 def GetCues(tar, interfer, fs, frame_len, filter_type, cfs, frame_shift=None, max_delay=None, ihc_type=None):
