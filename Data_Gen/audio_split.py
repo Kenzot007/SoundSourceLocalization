@@ -2,7 +2,7 @@ from pydub import AudioSegment
 import os
 import math
 
-def split_audio_to_1s_segments(input_file, output_dir='G:\GitHub\SoundSourceLocalization\Data_Gen'):
+def split_audio_to_1s_segments(input_file, output_dir='G:\GitHub\SoundSourceLocalization\Data_Gen\office'):
     # 创建输出目录
     os.makedirs(output_dir, exist_ok=True)
 
@@ -21,7 +21,7 @@ def split_audio_to_1s_segments(input_file, output_dir='G:\GitHub\SoundSourceLoca
         end = min((i + 1) * segment_length, duration_ms)
         segment = audio[start:end]
 
-        segment_path = os.path.join(output_dir, f"Noise_{i + 1}.wav")
+        segment_path = os.path.join(output_dir, f"Office_{i + 1}.wav")
         segment.export(segment_path, format="wav")
         print(f"保存: {segment_path}")
 
