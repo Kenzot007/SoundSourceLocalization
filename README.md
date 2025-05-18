@@ -41,3 +41,8 @@ Merge two mono audios and add angle to both audios.
 ```bash
 python binauralize_mixaudio.py --file1 audio1.wav --file2 audio2.wav --location1 "90,0" --location2 "270,0"
 ```
+
+**Database creation**:
+Voice Audio: LibriSpeech ASR: http://www.openslr.org/12
+Background Noise: Demand Dataset: https://www.kaggle.com/datasets/aanhari/demand-dataset
+
