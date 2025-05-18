@@ -21,7 +21,7 @@ def main():
         order of gammatone filter: 4
     """
     # Load signal and visualize
-    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/audio/sin_440Hz.wav_[270, 0]_sin_5000Hz.wav_[90, 0].wav')
+    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/output_mixed.wav')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]
     t = np.arange(0, len(left_signal)) / fs
