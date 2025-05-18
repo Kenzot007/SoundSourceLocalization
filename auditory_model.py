@@ -67,15 +67,14 @@ def Butter_spectrogram(signal, fs, cfs):
 def GF_spectrogram(signal, fs, cfs):
     coefs = gt_filters.make_erb_filters(fs=fs, centre_freqs=cfs)
 
+    plot_gammatone_frequency_response(fs=fs, cfs=cfs, coefs=coefs)
     left_audiogram = gt_filters.erb_filterbank(signal[:, 0], coefs)
     right_audiogram = gt_filters.erb_filterbank(signal[:, 1], coefs)
 
     plot_left_audiogram_spectrogram(left_audiogram, fs)
     plot_right_audiogram_spectrogram(right_audiogram, fs)
-    # plot_audiogram(left_audiogram)
     audiogram = np.concatenate((left_audiogram[:, :, np.newaxis],
                                        right_audiogram[:, :, np.newaxis]), axis=2)
-    # visualize_audiogram(audiogram)
     return audiogram
 
 
@@ -89,26 +88,6 @@ def APGF_spectrogram(signal, fs, cfs):
 
     lr_audiogram = np.stack((left_audiogram, right_audiogram), axis=2)
     return lr_audiogram
-
-def Without_filter(signal, fs):
-    from binaural_features import calculate_itd, calculate_ild
-    frame_len = int(fs * 16000)
-    frame_shift = int(frame_len * 0.5)
-    wav_len = signal.shape[0]
-    frame_num = int((wav_len - frame_len) / frame_shift)
-
-    itd_values = []
-    ild_values = []
-
-    for frame_index in range(frame_num):
-        frame_start = frame_index * frame_shift
-        frame_end = frame_start + frame_len
-        frame_signal = signal[frame_start:frame_end]
-
-        itd_values.append(calculate_itd(frame_signal, fs))
-        ild_values.append(calculate_ild(frame_signal))
-
-    return np.array(itd_values), np.array(ild_values)
 
 def Haircell_model(signal, fs, model_type='Lindemann'):
     if model_type == 'Lindemann':
@@ -162,7 +141,7 @@ def Audiotory_peripheral(signal, fs, cfs, filter_type, model_type=None):
     if model_type == None:
         env = audiogram
     else:
-        env = Haircell_model(audiogram, fs, model_type)
-        #env = audiogram
+        #env = Haircell_model(audiogram, fs, model_type)
+        env = audiogram
 
     return [audiogram, env]

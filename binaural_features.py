@@ -17,69 +17,52 @@ def Efficient_ccf(left_signal, right_signal):
 
     return ccf
 
-def calculate_itd(signal, fs, max_delay=None, alpha=0.1):
-    """Efficient ITD & IC estimation (single frame, two‑channel signal)
-
-    Parameters
-    ----------
-    signal : ndarray, shape (L, 2)
-        Left / right ear samples for the current frame.
-    fs : int or float
-        Sampling frequency [Hz].
-    max_delay : int, optional
-        Maximum ITD (in *samples*) to scan on each side; defaults to 1 ms.
-    alpha : float, optional
-        Exponential smoothing factor (0‥1).  Smaller => slower/steadier.
-
-    Returns
-    -------
-    itd : float
-        Interaural time difference [ms] of this frame.
-    ic : float
-        Interaural coherence (max of the normalised correlation curve).
-    gamma : ndarray, shape (2*max_delay+1,)
-        The full normalised cross‑correlation function.
-    """
+def calculate_ic(signal, fs, frame_shift, max_delay=None, tau=10):
+    """Compute only IC and cross-correlation function (gamma) without ITD estimation."""
     if signal.ndim != 2 or signal.shape[1] != 2:
         raise ValueError("`signal` must be (N,2) stereo frame")
 
     if max_delay is None:
-        max_delay = int(1e-3 * fs)  # ±1 ms by default
+        max_delay = int(1e-3 * fs)  # ±1ms default
 
-    xL = np.ascontiguousarray(signal[:, 0], dtype=float)
-    xR = np.ascontiguousarray(signal[:, 1], dtype=float)
-    N = xL.size
+    alpha = np.exp(-frame_shift / (fs * (tau / 1000)))
+    xL = np.ascontiguousarray(signal[:, 0], dtype=float)    # signal in left channel
+    xR = np.ascontiguousarray(signal[:, 1], dtype=float)    # signal in right channel
+    N = xL.size     # frame length
     D = max_delay
 
-    # Pre‑pad right channel once so we can vectorised‑index all lags
-    xR_pad = np.pad(xR, (D, D))
-    lags = np.arange(-D, D + 1)
-    K = lags.size  # = 2D+1
+    xR_pad = np.pad(xR, (D, D)) # e.g. change xr from [1] to [0,1,0] if D=1, Accessing arbitrary deferred state
+    lags = np.arange(-D, D + 1) # -max_delay < lags < max_delay+1
+    K = lags.size   # 2D+1
 
-    # State vectors for exponentially‑weighted running correlator
     cross = np.zeros(K)
-    eL = np.full(K, 1e-40)   # avoid divide‑by‑zero
+    eL = np.full(K, 1e-40)
     eR = np.full(K, 1e-40)
 
-    for n in range(N):
-        # Current sample values
+    for n in range(D,N-D):  # Each sampling point of the current frame
         sL = xL[n]
-        idx_R = lags + n + D   # shift indices for padded R channel
+        idx_R = lags + n + D
         sR_vec = xR_pad[idx_R]
 
-        # Recursive update (vectorised over all lags)
         cross = (1 - alpha) * cross + alpha * (sL * sR_vec)
         eL = (1 - alpha) * eL + alpha * (sL ** 2)
         eR = (1 - alpha) * eR + alpha * (sR_vec ** 2)
 
-    # Normalised cross‑correlation (gamma)
     denom = np.sqrt(eL * eR) + 1e-20
     gamma = cross / denom
 
+    ic = float(np.max(gamma))
+    return ic, gamma
+
+def calculate_itd(gamma, fs, max_delay):
+    """Given precomputed gamma, estimate ITD."""
+    maxitd=1.0
+    maxlag = int(round(maxitd * fs / 1000.0))
+    lags = np.arange(-max_delay, max_delay + 1)
     best_idx = int(np.argmax(gamma))
-    ic = float(gamma[best_idx])
     itd = (lags[best_idx] / fs) * 1e3  # convert to ms
-    return itd, ic, gamma
+    itd_val = (best_idx - maxlag) * 1000.0 / fs
+    return itd_val
 
 def calculate_ild(signal):
     """Compute ILD [dB] for a stereo frame."""
@@ -90,18 +73,19 @@ def calculate_ild(signal):
     rms_right = np.sqrt(np.mean(signal[:, 1] ** 2)) + eps
     return 20.0 * np.log10(rms_left / rms_right)
 
-def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None,
+def GetCues_clean(signal, fs, frame_len, filter_type, cfs, tau, frame_shift=None,
                    max_delay=None, ihc_type=None, c0=0.98):
     """Compute ITD, ILD, IC cues per critical‑band frame (vectorised ITD)."""
     from auditory_model import Audiotory_peripheral  # keep existing front‑end
 
     if frame_shift is None:
         frame_shift = frame_len // 2
+    frame_shift = int(frame_shift)
     if max_delay is None:
         max_delay = int(1e-3 * fs)
 
     # Auditory periphery → envelope (freq_ch, N, 2)
-    _, env = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
+    bm, _ = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
     N = signal.shape[0]
     frame_num = (N - frame_len) // frame_shift
     F = len(cfs)
@@ -115,7 +99,7 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None,
     for fi in range(frame_num):
         s = fi * frame_shift
         e = s + frame_len
-        frame_rms.extend(np.sqrt(np.mean(env[:, s:e, :] ** 2, axis=2)).ravel())
+        frame_rms.extend(np.sqrt(np.mean(bm[:, s:e, :] ** 2, axis=2)).ravel())
     thr = np.percentile(frame_rms, 5)
 
     alpha_ema = 0.9
@@ -123,12 +107,15 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None,
         s = fi * frame_shift
         e = s + frame_len
         for ch in range(F):
-            frame = env[ch, s:e, :]
+            frame = bm[ch, s:e, :]
             if np.sqrt(np.mean(frame ** 2)) < thr:
                 continue  # skip low‑energy frame
-            itd, ic, gamma = calculate_itd(frame, fs, max_delay)
+            ic, gamma = calculate_ic(frame, fs, frame_shift, max_delay, tau)
+
             if ic < c0:
                 continue  # IC gating
+
+            itd = calculate_itd(gamma, fs, max_delay)
             ild = calculate_ild(frame)
             if fi > 0:
                 spatial_cues[ch, fi, 0] = alpha_ema * itd + (1 - alpha_ema) * spatial_cues[ch, fi - 1, 0]

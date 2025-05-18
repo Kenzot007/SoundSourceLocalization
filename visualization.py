@@ -4,6 +4,7 @@ from scipy.fftpack import fft
 import gammatone.filters as gt_filters
 import scipy.signal as sp
 
+
 def compute_fft(signal, fs):
     N = len(signal)
     freq = np.linspace(0, fs / 2, N // 2)
@@ -141,16 +142,16 @@ def visualize_spatial_cues(spatial_cues, nonlinearity="log"):
 
     ax = axes[0]
     im = ax.imshow(itd, aspect='auto', cmap='magma', origin='lower')
-    ax.set_title("ITD Cochleagram")
-    ax.set_ylabel("Filter #")
-    ax.set_xlabel("Time")
+    ax.set_title("ITD Cochleagram", fontsize=16)
+    ax.set_ylabel("Filter #", fontsize=14)
+    ax.set_xlabel("Time", fontsize=14)
     fig.colorbar(im, ax=ax)
 
     ax = axes[1]
     im = ax.imshow(ild, aspect='auto', cmap='magma', origin='lower')
-    ax.set_title("ILD Cochleagram")
-    ax.set_ylabel("Filter #")
-    ax.set_xlabel("Time")
+    ax.set_title("ILD Cochleagram", fontsize=16)
+    ax.set_ylabel("Filter #", fontsize=14)
+    ax.set_xlabel("Time", fontsize=14)
     fig.colorbar(im, ax=ax)
     plt.show()
 
@@ -163,10 +164,10 @@ def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
     :param num_cols: Number of filter channels displayed per line (Default: 4)
     """
     num_filters, num_samples = left_audiogram.shape
-    num_rows = int(np.ceil(num_filters / num_cols))  # 计算行数
+    num_rows = int(np.ceil(num_filters / num_cols))
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 2), sharex=True, sharey=True)
-    axes = axes.flatten()  # 把 axes 转成一维数组，方便索引
+    axes = axes.flatten()
 
     for i in range(num_filters):
         f, t, Sxx = sp.spectrogram(left_audiogram[i], fs, nperseg=256)
@@ -174,7 +175,6 @@ def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
         axes[i].set_title(f'Filter {i}')
         axes[i].set_ylabel('Freq (Hz)')
 
-    # 隐藏多余的 subplot
     for j in range(num_filters, len(axes)):
         fig.delaxes(axes[j])
 
@@ -221,4 +221,26 @@ def plot_audiogram(audiogram, title="Cochleagram"):
     plt.ylabel("Filter #")
     plt.title(title)
     plt.colorbar(label="Energy")
+    plt.show()
+
+def plot_gammatone_frequency_response(fs, cfs, coefs, impulse_len=512):
+    plt.figure(figsize=(10, 6))
+
+    impulse = np.zeros(impulse_len)
+    impulse[0] = 1.0
+
+    responses = gt_filters.erb_filterbank(impulse, coefs)
+    freqs = np.fft.rfftfreq(impulse_len, 1/fs)
+    for i, h in enumerate(responses):
+        H = np.fft.rfft(h, n=impulse_len)
+        magnitude = 20 * np.log10(np.abs(H))
+        plt.plot(freqs, magnitude, label=f'{int(cfs[i])} Hz')
+
+    plt.title("Gammatone Filter Frequency Responses")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Gain (dB)")
+    plt.ylim([-40, 5])
+    plt.grid(True)
+    plt.legend(loc="lower left", fontsize=8, ncol=2)
+    plt.tight_layout()
     plt.show()
