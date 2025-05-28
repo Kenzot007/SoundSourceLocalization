@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 import gammatone.filters as gt_filters
 import scipy.signal as sp

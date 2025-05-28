@@ -5,6 +5,9 @@ from binaural_features import GetCues_clean
 from visualization import *
 from auditory_model import lowpass_filter
 import scipy.io
+
+import matplotlib
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 # Load audio file
@@ -21,7 +24,7 @@ def main():
         order of gammatone filter: 4
     """
     # Load signal and visualize
-    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/output_mixed.wav')
+    signal, fs = load_audio('G:\GitHub\SoundSourceLocalization\Dataset\main_audio_2_azi270.wav')
     left_signal = signal[:, 0]
     right_signal = signal[:, 1]
     t = np.arange(0, len(left_signal)) / fs

@@ -85,9 +85,9 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, tau, frame_shift=None
         max_delay = int(1e-3 * fs)
 
     # Auditory periphery → envelope (freq_ch, N, 2)
-    bm, _ = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
-    N = signal.shape[0]
-    frame_num = (N - frame_len) // frame_shift
+    filtered_env, _ = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
+    signal_len = signal.shape[0]
+    frame_num = (signal_len - frame_len) // frame_shift
     F = len(cfs)
 
     spatial_cues = np.zeros((F, frame_num, 2), dtype=np.float32)
@@ -96,18 +96,17 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, tau, frame_shift=None
 
     # Energy threshold (5th percentile of RMS)
     frame_rms = []
-    for fi in range(frame_num):
-        s = fi * frame_shift
-        e = s + frame_len
-        frame_rms.extend(np.sqrt(np.mean(bm[:, s:e, :] ** 2, axis=2)).ravel())
+    for frame_index in range(frame_num):
+        frame_start = frame_index * frame_shift
+        frame_end = frame_start + frame_len
+        frame_rms.extend(np.sqrt(np.mean(filtered_env[:, frame_start:frame_end, :] ** 2, axis=2)).ravel())
     thr = np.percentile(frame_rms, 5)
 
-    alpha_ema = 0.9
-    for fi in range(frame_num):
-        s = fi * frame_shift
+    for frame_index in range(frame_num):
+        s = frame_index * frame_shift
         e = s + frame_len
-        for ch in range(F):
-            frame = bm[ch, s:e, :]
+        for freq_index in range(F):
+            frame = filtered_env[freq_index, s:e, :]
             if np.sqrt(np.mean(frame ** 2)) < thr:
                 continue  # skip low‑energy frame
             ic, gamma = calculate_ic(frame, fs, frame_shift, max_delay, tau)
@@ -115,15 +114,16 @@ def GetCues_clean(signal, fs, frame_len, filter_type, cfs, tau, frame_shift=None
             if ic < c0:
                 continue  # IC gating
 
+            alpha_ema = 0.9
             itd = calculate_itd(gamma, fs, max_delay)
             ild = calculate_ild(frame)
-            if fi > 0:
-                spatial_cues[ch, fi, 0] = alpha_ema * itd + (1 - alpha_ema) * spatial_cues[ch, fi - 1, 0]
-                spatial_cues[ch, fi, 1] = alpha_ema * ild + (1 - alpha_ema) * spatial_cues[ch, fi - 1, 1]
+            if frame_index > 0:
+                spatial_cues[freq_index, frame_index, 0] = alpha_ema * itd + (1 - alpha_ema) * spatial_cues[freq_index, frame_index - 1, 0]
+                spatial_cues[freq_index, frame_index, 1] = alpha_ema * ild + (1 - alpha_ema) * spatial_cues[freq_index, frame_index - 1, 1]
             else:
-                spatial_cues[ch, fi] = [itd, ild]
-            gamma_all[ch, fi] = gamma
-            ics_all[ch, fi] = ic
+                spatial_cues[freq_index, frame_index] = [itd, ild]
+            gamma_all[freq_index, frame_index] = gamma
+            ics_all[freq_index, frame_index] = ic
     return [spatial_cues, gamma_all, ics_all]
 
 
