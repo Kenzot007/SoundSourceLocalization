@@ -3,8 +3,6 @@ import scipy.signal as sn
 from visualization import *
 from apgf import APGF
 import gammatone.filters as gt_filters
-import matplotlib.pyplot as plt
-from scipy.signal import butter, filtfilt
 
 def get_erb(cf):
     return 24.7 * (4.37 * cf / 1000 + 1.0)
@@ -69,15 +67,16 @@ def Butter_spectrogram(signal, fs, cfs):
 def GF_spectrogram(signal, fs, cfs):
     coefs = gt_filters.make_erb_filters(fs=fs, centre_freqs=cfs)
 
+    # Visualize Gammatone frequency response
+    # plot_gammatone_frequency_response(fs=fs, cfs=cfs, coefs=coefs)
     left_audiogram = gt_filters.erb_filterbank(signal[:, 0], coefs)
     right_audiogram = gt_filters.erb_filterbank(signal[:, 1], coefs)
 
-    plot_left_audiogram_spectrogram(left_audiogram, fs)
-    plot_right_audiogram_spectrogram(right_audiogram, fs)
-    # plot_audiogram(left_audiogram)
+    # Visualize Gammatone frequency response(Cochleagram)
+    # plot_left_audiogram_spectrogram(left_audiogram, fs)
+    # plot_right_audiogram_spectrogram(right_audiogram, fs)
     audiogram = np.concatenate((left_audiogram[:, :, np.newaxis],
                                        right_audiogram[:, :, np.newaxis]), axis=2)
-    # visualize_audiogram(audiogram)
     return audiogram
 
 
@@ -92,41 +91,18 @@ def APGF_spectrogram(signal, fs, cfs):
     lr_audiogram = np.stack((left_audiogram, right_audiogram), axis=2)
     return lr_audiogram
 
-def Without_filter(signal, fs):
-    from binaural_features import calculate_itd, calculate_ild
-    frame_len = int(fs * 16000)
-    frame_shift = int(frame_len * 0.5)
-    wav_len = signal.shape[0]
-    frame_num = int((wav_len - frame_len) / frame_shift)
-
-    itd_values = []
-    ild_values = []
-
-    for frame_index in range(frame_num):
-        frame_start = frame_index * frame_shift
-        frame_end = frame_start + frame_len
-        frame_signal = signal[frame_start:frame_end]
-
-        itd_values.append(calculate_itd(frame_signal, fs))
-        ild_values.append(calculate_ild(frame_signal))
-
-    return np.array(itd_values), np.array(ild_values)
-
 def Haircell_model(signal, fs, model_type='Lindemann'):
     if model_type == 'Lindemann':
         signal_rectified = np.maximum(signal, 0)  # Half-wave rectification
         b, a = sn.butter(1, 800.0 / (fs / 2.0))  # low-pass filter with 800Hz cutoff frequency
-
-        # check signal length
-        if signal_rectified.shape[0] <= max(6, len(b) * 3):
+        if signal_rectified.shape[0] <= max(6, len(b) * 3): # check signal length
             print(f"Skipping short signal ({signal_rectified.shape[0]} samples).")
-            return np.zeros_like(signal_rectified)  # 返回零数组代替，避免异常
-
+            return np.zeros_like(signal_rectified)
         envelope = sn.filtfilt(b, a, signal_rectified, axis=1)
 
     elif model_type == 'Breebaart':
         signal_rectified = np.maximum(signal, 0)
-        b, a = sn.butter(5, 2000.0 / (fs / 2.0))  # 2000 Hz 截止频率高阶滤波器
+        b, a = sn.butter(5, 2000.0 / (fs / 2.0))
         envelope = sn.filtfilt(b, a, signal_rectified, axis=1)
 
     elif model_type == 'Roman':
@@ -134,7 +110,13 @@ def Haircell_model(signal, fs, model_type='Lindemann'):
         envelope = np.sqrt(signal_rectified)
 
     elif model_type == 'rectify':
-        envelope = np.maximum(signal, 0)  # 仅半波整流
+        envelope = np.maximum(signal, 0)
+
+    elif model_type == 'Christof':
+        signal_compressed = np.power(np.abs(signal), 0.23)
+        signal_rectified = np.maximum(signal_compressed, 0)
+        sos = sn.butter(4, 425/(fs/2.0), btype='low', output='sos')
+        envelope = sn.sosfiltfilt(sos, signal_rectified, axis=1)
 
     else:
         raise ValueError("Unsupported haircell model type.")
@@ -161,6 +143,7 @@ def Audiotory_peripheral(signal, fs, cfs, filter_type, model_type=None):
     if model_type == None:
         env = audiogram
     else:
-        env = Haircell_model(audiogram, fs, model_type)
+        #env = Haircell_model(audiogram, fs, model_type)
+        env = audiogram
 
     return [audiogram, env]

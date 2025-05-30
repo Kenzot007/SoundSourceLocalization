@@ -1,232 +1,105 @@
 import numpy as np
 from auditory_model import Audiotory_peripheral, Haircell_model
 
-def Efficient_ccf(left_signal, right_signal):
-    """calculate cross-correlation function in frequency domain, which is more efficient than the direct calculation"""
-    if left_signal.shape[0] != right_signal.shape[0]:
-        raise Exception('length mismatch')
-    signal_len = left_signal.shape[0]
-    window = np.hanning(signal_len)
-    left_signal = left_signal * window
-    right_signal = right_signal * window
+def calculate_itd_ild_ic(in1, in2, sfreq, maxitd=1.0, maxild=7.0, tau=10, ofst=0):
 
-    left_fft = np.fft.fft(left_signal, 2 * signal_len - 1) # zero-padding
-    right_fft = np.fft.fft(right_signal, 2 * signal_len - 1)
-    ccf_unshift = np.real(np.fft.ifft(left_fft * np.conjugate(right_fft)))
-    ccf = np.fft.fftshift(ccf_unshift)
+    in1 = np.ravel(in1).astype(float)
+    in2 = np.ravel(in2).astype(float)
+    N = max(in1.size, in2.size)
 
-    return ccf
+    if in1.size != in2.size:
+        if in1.size < N:
+            in1 = np.pad(in1, (0, N - in1.size))
+        if in2.size < N:
+            in2 = np.pad(in2, (0, N - in2.size))
 
-def calculate_itd(signal, fs, max_delay=None, inter_method='exponential'):
-    """
-        estimate ITD based on interaural corss-correlation function
-        itd = chann0_delay - chann1_delay
-        x_detrend[:, 0]: left ear signal, x_trend[:, 1]: right ear signal
-        corr(i) = sum(x0[t]*x1[t-i])
-            | >0 chann1 lead
-        itd |
-            | <0 chann0 lead
-
-        Args:
-            signal: Input binaural audio signal, shape = (num_samples, 2)
-            max_delay: maximum value of ITD, which equals sampling rate * maximum delay(s), default value: 1ms
-            inter_method: method of ccf interpolation, "None"(default),"parabolic","exponential".
-        """
-    signal_len = signal.shape[0]
-    signal_detrend = signal - np.mean(signal, axis=0)   # x_detrend = x - np.mean(x, axis=0)
-
-    if max_delay is None:
-        max_delay = int(1e-3 * fs)  # 1ms delay (typical human ITD max)
-
-    # frequency domain
-    ccf_full = Efficient_ccf(signal_detrend[:, 0], signal_detrend[:, 1])
-    ccf = ccf_full[signal_len-1-max_delay : signal_len+max_delay]
-
-    energy_left = np.sum(signal_detrend[:, 0] ** 2)
-    energy_right = np.sum(signal_detrend[:, 1] ** 2)
-    ccf_std = ccf / np.sqrt(energy_left * energy_right) + 1e-10
-    max_pos = np.argmax(ccf)  # Optimal delay in signal alignment between the left and right ears
-
-    # exponential interpolation
-    delta = 0
-    if inter_method == 'exponential':
-        if max_pos > 0 and max_pos < max_delay * 2 - 2:
-            if np.min(ccf[max_pos - 1:max_pos + 2]) > 0:
-                delta = (np.log10(ccf[max_pos + 1]) - np.log10(ccf[max_pos - 1])) / \
-                        (4 * np.log10(ccf[max_pos]) -
-                        2 * np.log10(ccf[max_pos - 1]) -
-                        2 * np.log10(ccf[max_pos + 1]))
-    elif inter_method == 'parabolic':
-        if max_pos > 0 and max_pos < max_delay * 2 - 2:
-            delta = (ccf[max_pos - 1] - ccf[max_pos + 1]) / (
-                        2 * (ccf[max_pos + 1] - 2 * ccf[max_pos] + ccf[max_pos - 1]))
-
-    ITD = float((max_pos - max_delay - 1 + delta)) / fs * 1e3
-    return [ITD, ccf_std]  # ITD(ms)
-
-def calculate_ild(signal):
-    """ ILD
-        To be consistent with ITD:
-        ild = 10log10(chann0_energy/chann1_energy)
-            |>0 chann0 lead(left ear)
-        ild |
-            |<0 chann1 lead(right ear)
-    """
-    # window = np.hanning(signal.shape[0])
-    # left_fft = np.fft.fft(signal[:, 0] * window)
-    # right_fft = np.fft.fft(signal[:, 1] * window)
-    # left_energy = np.mean(np.abs(left_fft**2)) + 1e-10
-    # right_energy = np.mean(np.abs(right_fft**2)) + 1e-10
-    # return 10*np.log10(left_energy / right_energy)
-
-    rms_left = np.sqrt(np.mean(np.power(signal[:, 0], 2))) + np.finfo(float).eps
-    rms_right = np.sqrt(np.mean(np.power(signal[:, 1], 2))) + np.finfo(float).eps
-
-    # 计算 ILD
-    ild = 20 * np.log10(rms_left / rms_right)
-
-    return ild
-
-def GetCues_clean(signal, fs, frame_len, filter_type, cfs, frame_shift=None, max_delay=None, ihc_type=None):
-    """calculate binaural localization cues, [itds,ilds,ccfs]
-
-    Args:
-        signal: target signal
-        fs: sample frequency
-        frame_len:
-        filter_type: "Gammatone" / "Butterworth"
-        cfs: center frequencies of filters
-        frame_shift: default frame_len/2
-        max_daly: the maximum delay(sample), default frame_len-1
-        ihc_type: different model used in previous work
-            Lindemann: half-wave rectify + low-pass filter(1th Butterworth, cutoff-frequency 800Hz)
-            Breebart: half-wave rectify + low-pass filter(5th, cutoff-frequency 770Hz)
-            More to added....
-    Returns:
-        [[itds,ilds],ccfs]
-        spatial_cues: shape = (freq_chann_num, frame_num, 2) [ITD, ILD]
-        ccf_std_all: shape = (freq_chann_num, frame_num, max_delay*2 + 1)
-    """
-
-    signal_len = signal.shape[0]
-
-    if frame_len > 2*signal_len:
-        frame_len = signal_len // 2
-        frame_shift = int(frame_len / 2)
-        max_delay = frame_len - 1
-        print('frame_len too big, automatically shrunk its value')
-
-    # filtered signal
-    #freq_chann_num = cfs.shape[0]
-    freq_chann_num = len(cfs)
-    _, signal_env = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
-
-    frame_num = int((signal_len - frame_len - frame_len) / frame_shift + 1)
-
-    # initialize matrix for ITD and ILD
-    spatial_cues = np.zeros((freq_chann_num, frame_num, 2), dtype=np.float32)  # [itd_frame,ild_frame]
-    ccf_std_all = np.zeros((freq_chann_num, frame_num, max_delay * 2 + 1), dtype=np.float32)
-
-    for freq_chann_i in range(freq_chann_num):
-        for frame_i in range(frame_num):
-            frame_start_pos = frame_i * frame_shift + frame_len
-            frame_end_pos = frame_start_pos + frame_len
-
-            tar_chann_frame = signal_env[freq_chann_i, frame_start_pos:frame_end_pos, :]
-
-            # calculate ITD and ILD
-            itd_frame, ccf_std_frame = calculate_itd(tar_chann_frame, fs, max_delay=max_delay)
-            ild_frame = calculate_ild(tar_chann_frame)
-
-            # check whether ILD is valid
-            if ild_frame == np.inf:
-                print(freq_chann_i, frame_i)
-                raise Exception('invalid ild')
-
-            spatial_cues[freq_chann_i, frame_i, 0] = itd_frame
-            spatial_cues[freq_chann_i, frame_i, 1] = ild_frame
-            ccf_std_all[freq_chann_i, frame_i, :] = ccf_std_frame
-
-    return [spatial_cues, ccf_std_all]
-
-
-
-# 噪声环境下提取cues
-def GetCues(tar, interfer, fs, frame_len, filter_type, cfs, frame_shift=None, max_delay=None, ihc_type=None):
-    """calculate binaural localization cues, [itds,ilds,ccfs]
-
-    Args:
-        tar: target signal
-        fs: sample frequency
-        frame_len:
-        filter_type: "Gammatone" / "Butterworth"
-        cfs: center frequencies of filters
-        frame_shift: default frame_len/2
-        max_daly: the maximum delay(sample), default frame_len-1
-        ihc_type: different model used in previous work
-            Lindemann: half-wave rectify + low-pass filter(1th Butterworth, cutoff-frequency 800Hz)
-            Breebart: half-wave rectify + low-pass filter(5th, cutoff-frequency 770Hz)
-            More to added....
-    Returns:
-        [[itds,ilds],ccfs]
-        spatial_cues: shape = (freq_chann_num, frame_num, 2) [ITD, ILD]
-        ccf_std_all: shape = (freq_chann_num, frame_num, max_delay*2 + 1)
-    """
-
-    wav_len = tar.shape[0]
-    if wav_len != interfer.shape[0]:
-        raise Exception('length do match')
-
-    if frame_shift == None:  # default overlap: frame_len/2
-        frame_shift = int(frame_len / 2)
-
-    freq_chann_num = cfs.shape[0]
-
-    tar_audiogram, _ = Audiotory_peripheral(tar, fs, cfs, filter_type, ihc_type)
-    interfer_audiogram = Audiotory_peripheral(interfer, fs, cfs, filter_type, ihc_type)
-
-    mix_audiogram = tar_audiogram + interfer_audiogram
-
-    if ihc_type == None:
-        mix_env = mix_audiogram
+    if np.isscalar(tau):
+        tau_ild = tau_itd = tau_ic = tau
     else:
-        print('ihc model: %s' % ihc_type)
-        mix_env = Haircell_model(mix_audiogram, fs, ihc_type)
+        tau_ild, tau_itd, tau_ic = tau
 
-    frame_num = int((wav_len - frame_len - frame_len) / frame_shift + 1)
-    if max_delay == None:
-        max_delay = frame_len - 1
+    alpha_ild = 1.0 / (tau_ild * sfreq / 1000.0) if tau_ild > 0 else 1.0
+    alpha_itd = 1.0 / (tau_itd * sfreq / 1000.0) if tau_itd > 0 else 1.0
+    alpha_ic = 1.0 / (tau_ic * sfreq / 1000.0) if tau_ic > 0 else 1.0
 
-    spatial_cues = np.zeros((freq_chann_num, frame_num, 2), dtype=np.float32)  # [itd_frame,ild_frame]
-    ccf_std_all = np.zeros((freq_chann_num, frame_num, max_delay * 2 + 1), dtype=np.float32)
-    SNR_all = np.zeros((freq_chann_num, frame_num), dtype=np.float32)
+    maxlag = int(round(maxitd * sfreq / 1000.0))
+    pad = maxlag
+    in2_padded = np.pad(in2, (pad, pad))
+    n_lags = 2 * maxlag + 1
+    lag_indices = np.arange(-maxlag, maxlag + 1, dtype=int)
 
-    for freq_chann_i in range(freq_chann_num):
-        itds_chann = []
-        ilds_chann = []
-        ccfs_chann = []
-        # print(cfs[freq_chann_i])
-        for frame_i in range(frame_num):
-            frame_start_pos = frame_i * frame_shift + frame_len
-            frame_end_pos = frame_start_pos + frame_len
+    itd = np.zeros(N)
+    ild = np.zeros(N)
+    ic = np.zeros(N)
+    pow_signal = np.zeros(N)
 
-            mix_env_chann_fram = mix_env[freq_chann_i, frame_start_pos:frame_end_pos]
+    cross_fast = np.zeros(n_lags)
+    left_fast = np.full(n_lags, 1e-40)
+    right_fast = np.full(n_lags, 1e-40)
+    cross_slow = np.zeros(n_lags)
+    left_slow = np.full(n_lags, 1e-40)
+    right_slow = np.full(n_lags, 1e-40)
 
-            tar_chann_frame = tar_audiogram[freq_chann_i, frame_start_pos:frame_end_pos]
-            interfer_chann_frame = interfer_audiogram[freq_chann_i, frame_start_pos:frame_end_pos]
-            SNR_chan_frame = 10 * np.log10(np.sum(tar_chann_frame ** 2) / np.sum(interfer_chann_frame ** 2))
+    for i in range(N):
+        j_pad = lag_indices + i + pad
+        right_vals = in2_padded[j_pad]
+        left_val = in1[i]
 
-            # bianural cues
-            itd_frame, ccf_std_frame = calculate_itd(mix_env_chann_fram, fs, max_delay=max_delay)
-            ild_frame = calculate_ild(mix_env_chann_fram)
-            # check whether ILD is valid
-            if ild_frame == np.inf:
-                print(freq_chann_i, frame_i)
-                raise Exception('invalid ild')
+        cross_fast = cross_fast * (1 - alpha_itd) + alpha_itd * (left_val * right_vals)
+        left_fast = left_fast * (1 - alpha_itd) + alpha_itd * (left_val ** 2)
+        right_fast = right_fast * (1 - alpha_itd) + alpha_itd * (right_vals ** 2)
 
-            spatial_cues[freq_chann_i, frame_i, 0] = itd_frame
-            spatial_cues[freq_chann_i, frame_i, 1] = ild_frame
-            ccf_std_all[freq_chann_i, frame_i, :] = ccf_std_frame
-            SNR_all[freq_chann_i, frame_i] = SNR_chan_frame
+        cross_slow = cross_slow * (1 - alpha_ic) + alpha_ic * (left_val * right_vals)
+        left_slow = left_slow * (1 - alpha_ic) + alpha_ic * (left_val ** 2)
+        right_slow = right_slow * (1 - alpha_ic) + alpha_ic * (right_vals ** 2)
 
-    return [spatial_cues, ccf_std_all, SNR_all]
+        denom_fast = np.sqrt(left_fast * right_fast) + 1e-20
+        corr_fast = cross_fast / denom_fast
+
+        best_idx = np.argmax(corr_fast)
+        itd[i] = (best_idx - maxlag) * 1000.0 / sfreq
+
+        left_energy = left_fast[best_idx]
+        right_energy = right_fast[best_idx]
+        ild_val = 10.0 * np.log10((left_energy + 1e-40) / (right_energy + 1e-40))
+        ild[i] = np.clip(ild_val, -maxild, maxild)
+
+        denom_slow = np.sqrt(left_slow * right_slow) + 1e-20
+        corr_slow = cross_slow / denom_slow
+        ic[i] = np.max(corr_slow)
+
+        pow_signal[i] = left_energy + right_energy
+
+    if ofst > 0 and ofst < N:
+        return ild[ofst:], itd[ofst:], ic[ofst:], pow_signal[ofst:]
+    else:
+        return ild, itd, ic, pow_signal
+
+def GetCues_clean(signal, fs, frame_len, filter_type, cfs, alpha=None, frame_shift=None,
+                   max_delay=None, ihc_type=None):
+    """Compute ITD, ILD, IC cues per critical‑band frame (vectorised ITD)."""
+    from auditory_model import Audiotory_peripheral  # keep existing front‑end
+
+    # Auditory periphery → envelope (freq_ch, N, 2)
+    filtered_env, _ = Audiotory_peripheral(signal, fs, cfs, filter_type, ihc_type)
+    F, N, _ = filtered_env.shape
+
+    itd_all = np.zeros((F, N))
+    ild_all = np.zeros((F, N))
+    ic_all = np.zeros((F, N))
+    power_all = np.zeros((F, N))
+
+    for f_idx, fcenter in enumerate(cfs):
+        left = filtered_env[f_idx, :, 0]
+        right = filtered_env[f_idx, :, 1]
+        ild, itd, ic, power = calculate_itd_ild_ic(left, right, sfreq=fs)
+        itd_all[f_idx, :len(itd)] = itd
+        ild_all[f_idx, :len(ild)] = ild
+        ic_all[f_idx, :len(ic)] = ic
+        power_all[f_idx, :len(power)] = power
+    return {
+        "itd": itd_all,
+        "ild": ild_all,
+        "ic": ic_all,
+        "power": power_all
+    }

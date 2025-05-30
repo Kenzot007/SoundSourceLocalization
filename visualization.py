@@ -1,8 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 import gammatone.filters as gt_filters
 import scipy.signal as sp
+
 
 def compute_fft(signal, fs):
     N = len(signal)
@@ -114,6 +113,16 @@ def visualize_audiogram(audiogram):
 #     plt.tight_layout()
 #     plt.show()
 
+def visualize_ics_all(ics_all):
+    plt.figure(figsize=(10, 4))
+    plt.imshow(ics_all, aspect="auto", origin="lower", cmap="magma")
+    plt.title("IC Cochleagram", fontsize=16)
+    plt.xlabel("Frame index", fontsize=14)
+    plt.ylabel("Filter # (frequency channel)", fontsize=14)
+    plt.colorbar(label="IC value")
+    plt.tight_layout()
+    plt.show()
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -141,40 +150,39 @@ def visualize_spatial_cues(spatial_cues, nonlinearity="log"):
 
     ax = axes[0]
     im = ax.imshow(itd, aspect='auto', cmap='magma', origin='lower')
-    ax.set_title("ITD Cochleagram")
-    ax.set_ylabel("Filter #")
-    ax.set_xlabel("Time")
+    ax.set_title("ITD Cochleagram", fontsize=16)
+    ax.set_ylabel("Filter #", fontsize=14)
+    ax.set_xlabel("Time", fontsize=14)
     fig.colorbar(im, ax=ax)
 
     ax = axes[1]
     im = ax.imshow(ild, aspect='auto', cmap='magma', origin='lower')
-    ax.set_title("ILD Cochleagram")
-    ax.set_ylabel("Filter #")
-    ax.set_xlabel("Time")
+    ax.set_title("ILD Cochleagram", fontsize=16)
+    ax.set_ylabel("Filter #", fontsize=14)
+    ax.set_xlabel("Time", fontsize=14)
     fig.colorbar(im, ax=ax)
     plt.show()
 
 def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
     """
-    绘制所有 Gammatone 滤波后的信号的 Spectrogram 时频图，排列在一个大图中。
+    Plot the spectrograms of all gammatone filtered signals, arranged in one large graph.
 
-    :param left_audiogram: 形状 (num_filters, num_samples) 的 Gammatone 处理后的信号
-    :param fs: 采样率
-    :param num_cols: 每行显示的滤波通道数（默认 4）
+    :param left_audiogram: num_filters, num_samples
+    :param fs: samping rate
+    :param num_cols: Number of filter channels displayed per line (Default: 4)
     """
     num_filters, num_samples = left_audiogram.shape
-    num_rows = int(np.ceil(num_filters / num_cols))  # 计算行数
+    num_rows = int(np.ceil(num_filters / num_cols))
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 2), sharex=True, sharey=True)
-    axes = axes.flatten()  # 把 axes 转成一维数组，方便索引
+    axes = axes.flatten()
 
     for i in range(num_filters):
         f, t, Sxx = sp.spectrogram(left_audiogram[i], fs, nperseg=256)
         axes[i].pcolormesh(t, f, 10 * np.log10(Sxx + 1e-10), shading='auto', cmap='magma')
-        axes[i].set_title(f'Filter {i + 1}')
+        axes[i].set_title(f'Filter {i}')
         axes[i].set_ylabel('Freq (Hz)')
 
-    # 隐藏多余的 subplot
     for j in range(num_filters, len(axes)):
         fig.delaxes(axes[j])
 
@@ -185,11 +193,11 @@ def plot_left_audiogram_spectrogram(left_audiogram, fs, num_cols=4):
 
 def plot_right_audiogram_spectrogram(right_audiogram, fs, num_cols=4):
     """
-    绘制所有 Gammatone 滤波后的信号的 Spectrogram 时频图，排列在一个大图中。
+    Plot the spectrograms of all gammatone filtered signals, arranged in one large graph.
 
-    :param left_audiogram: 形状 (num_filters, num_samples) 的 Gammatone 处理后的信号
-    :param fs: 采样率
-    :param num_cols: 每行显示的滤波通道数（默认 4）
+    :param left_audiogram: num_filters, num_samples
+    :param fs: samping rate
+    :param num_cols: Number of filter channels displayed per line (Default: 4)
     """
     num_filters, num_samples = right_audiogram.shape
     num_rows = int(np.ceil(num_filters / num_cols))  # 计算行数
@@ -200,7 +208,7 @@ def plot_right_audiogram_spectrogram(right_audiogram, fs, num_cols=4):
     for i in range(num_filters):
         f, t, Sxx = sp.spectrogram(right_audiogram[i], fs, nperseg=256)
         axes[i].pcolormesh(t, f, 10 * np.log10(Sxx + 1e-10), shading='auto', cmap='magma')
-        axes[i].set_title(f'Filter {i + 1}')
+        axes[i].set_title(f'Filter {i}')
         axes[i].set_ylabel('Freq (Hz)')
 
     # 隐藏多余的 subplot
@@ -221,4 +229,71 @@ def plot_audiogram(audiogram, title="Cochleagram"):
     plt.ylabel("Filter #")
     plt.title(title)
     plt.colorbar(label="Energy")
+    plt.show()
+
+def plot_gammatone_frequency_response(fs, cfs, coefs, impulse_len=512):
+    plt.figure(figsize=(10, 6))
+
+    impulse = np.zeros(impulse_len)
+    impulse[0] = 1.0
+
+    responses = gt_filters.erb_filterbank(impulse, coefs)
+    freqs = np.fft.rfftfreq(impulse_len, 1/fs)
+    for i, h in enumerate(responses):
+        H = np.fft.rfft(h, n=impulse_len)
+        magnitude = 20 * np.log10(np.abs(H))
+        plt.plot(freqs, magnitude, label=f'{int(cfs[i])} Hz')
+
+    plt.title("Gammatone Filter Frequency Responses")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Gain (dB)")
+    plt.ylim([-40, 5])
+    plt.grid(True)
+    plt.legend(loc="lower left", fontsize=8, ncol=2)
+    plt.tight_layout()
+    plt.show()
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+def visualize_itd_ild_ic(itd, ild, ic, nonlinearity="log"):
+    """
+    可视化 ITD、ILD 和 IC（逐样本计算版本）
+
+    Args:
+        itd, ild, ic: 形状为 (num_filters, num_samples) 的 NumPy 数组
+        nonlinearity: 'log' 或 'power' 增强对比度
+    """
+    if nonlinearity == "log":
+        itd_vis = np.log1p(np.abs(itd)) * np.sign(itd)
+        ild_vis = np.log1p(np.abs(ild)) * np.sign(ild)
+        ic_vis  = np.log1p(ic)
+    elif nonlinearity == "power":
+        itd_vis = np.sign(itd) * np.power(np.abs(itd), 0.3)
+        ild_vis = np.sign(ild) * np.power(np.abs(ild), 0.3)
+        ic_vis  = np.power(ic, 0.3)
+    else:
+        itd_vis = itd
+        ild_vis = ild
+        ic_vis  = ic
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+
+    im0 = axes[0].imshow(itd_vis, aspect='auto', cmap='coolwarm', origin='lower')
+    axes[0].set_title("ITD (ms)")
+    plt.colorbar(im0, ax=axes[0])
+
+    im1 = axes[1].imshow(ild_vis, aspect='auto', cmap='coolwarm', origin='lower')
+    axes[1].set_title("ILD (dB)")
+    plt.colorbar(im1, ax=axes[1])
+
+    im2 = axes[2].imshow(ic_vis, aspect='auto', cmap='viridis', origin='lower', vmin=0, vmax=1)
+    axes[2].set_title("IC")
+    axes[2].set_xlabel("Sample Index")
+    plt.colorbar(im2, ax=axes[2])
+
+    for ax in axes:
+        ax.set_ylabel("Filter #")
+
+    plt.tight_layout()
     plt.show()
