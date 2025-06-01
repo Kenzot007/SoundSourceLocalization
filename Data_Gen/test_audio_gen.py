@@ -94,5 +94,5 @@ if __name__ == '__main__':
     target_azimuth = 90
     bg_azimuths = [30, 210]  # or None for random
 
-    output, sr = spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths, snr_db=20)
-    sf.write('output_mixed_snr=20dB.wav', output, sr)
+    output, sr = spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths, snr_db=-5)
+    sf.write('output_mixed_snr=-5dB.wav', output, sr)
