@@ -8,10 +8,8 @@ This project includes a series of Python scripts for binaural feature extraction
 
 ### **1. `binaural_feature.py`**
 Functions for extracting binaural audio features:
-- `efficient_ccf`: Efficient cross-correlation computation
-- `calculate_ild`: Compute Interaural Level Difference (ILD)
-- `calculate_itd`: Compute Interaural Time Difference (ITD)
-- `GetCues_clean`: Extract clean binaural cues
+- `calculate_itd_ild_ic`: Calculate ITD, ILD and IC spatial cues are extracted frame by frame from the left and right ear signals to simulate the time difference, intensity difference and coherence in human binaural hearing.
+- `GetCues_clean`: Perform cochlear filtering and envelope extraction on binaural audio signals, calculate and output complete ITD, ILD, IC and energy feature maps by frequency band.
 
 ---
 
@@ -24,25 +22,23 @@ Implements an auditory peripheral model:
 - `filter_type`: `GF_spectrogram` (Gammatone filterbank)
 - `model_type`: `Roman, Half-wave rectification + signal envelope`
 
----
-
-### **3. `gen_audio.py`**
-Generates sine wave or impulse audio files.
-
-**Example usage**:
-```bash
-python gen_audio.py sin --frequency 2000 --duration 1 --sample_rate 44100
-```
-
-### **4. ‘binauralize_mixaudio.py'**
-Merge two mono audios and add angle to both audios.
-
-**Example usage**:
-```bash
-python binauralize_mixaudio.py --file1 audio1.wav --file2 audio2.wav --location1 "90,0" --location2 "270,0"
-```
-
 **Database creation**:
-Voice Audio: LibriSpeech ASR: http://www.openslr.org/12
-Background Noise: Demand Dataset: https://www.kaggle.com/datasets/aanhari/demand-dataset
+1. 700 main audio files with 1 second long. Audio from human speech, LibriSpeech ASR: http://www.openslr.org/12
+2. 10 noisy types from Esc-50 dataset https://github.com/karolpiczak/ESC-50. Each type contains 20 noisy files.
+3. Combine the main audio with 2 noisy audio. The main audio and 2 noisy audio are processed with HRTF and each main audio has 72 classes(from 0° to 355°). The direction of 2 noisy audio are randomly and snr of them are randomly as well.
+
+**Result Analysis**:
+1. A sorrounded audio to see the changes of itd and ild over the time:
+<img width="767" alt="image" src="https://github.com/user-attachments/assets/6b11f06b-e4e4-41f2-8961-fcefde4d213e" />
+
+2. An audio with different noisy level:
+
+SNR=0:
+
+<img width="780" alt="image" src="https://github.com/user-attachments/assets/1a7af932-84cd-4d94-b0bb-5bd2946c3c7f" />
+
+SNR=15:
+
+<img width="791" alt="image" src="https://github.com/user-attachments/assets/5708f0d3-559d-4637-bb1d-b4bd10fe8c94" />
+
 
