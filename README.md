@@ -27,3 +27,18 @@ Implements an auditory peripheral model:
 2. 10 noisy types from Esc-50 dataset https://github.com/karolpiczak/ESC-50. Each type contains 20 noisy files.
 3. Combine the main audio with 2 noisy audio. The main audio and 2 noisy audio are processed with HRTF and each main audio has 72 classes(from 0° to 355°). The direction of 2 noisy audio are randomly and snr of them are randomly as well.
 
+**Result Analysis**:
+1. A sorrounded audio to see the changes of itd and ild over the time:
+<img width="767" alt="image" src="https://github.com/user-attachments/assets/6b11f06b-e4e4-41f2-8961-fcefde4d213e" />
+
+2. An audio with different noisy level:
+
+SNR=0:
+
+<img width="780" alt="image" src="https://github.com/user-attachments/assets/1a7af932-84cd-4d94-b0bb-5bd2946c3c7f" />
+
+SNR=15:
+
+<img width="791" alt="image" src="https://github.com/user-attachments/assets/5708f0d3-559d-4637-bb1d-b4bd10fe8c94" />
+
+
