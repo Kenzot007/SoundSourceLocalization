@@ -1,7 +1,10 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 import numpy as np
 import soundfile as sf
 import gammatone.filters as gt_filters
-from binaural_features import GetCues_clean
+from binaural_features import GetCues_clean_torch
 from visualization import *
 from auditory_model import lowpass_filter
 import scipy.io
@@ -9,6 +12,12 @@ import scipy.io
 import matplotlib
 #matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
+
+import torch
+print("CUDA available:", torch.cuda.is_available())
+print("Current device:", torch.cuda.current_device())
+print("Device name:", torch.cuda.get_device_name(0))
+
 
 # Load audio file
 def load_audio(file_path):
@@ -24,13 +33,13 @@ def main():
         order of gammatone filter: 4
     """
 
-    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Data_Gen/output_mixed_snr=0dB.wav')
+    signal, fs = load_audio(r'C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\Dataset\main_audio_300_azi0.wav')
     filter_type = 'Gammatone'
     cfs = gt_filters.centre_freqs(cutoff=80, fs=fs, num_freqs=32)
 
     frame_len = int(fs * 0.02)
 
-    cues = GetCues_clean(cfs=cfs,
+    cues = GetCues_clean_torch(cfs=cfs,
                          filter_type=filter_type,
                          frame_len=frame_len,
                          frame_shift=int(frame_len * 0.5), # 50% overlap
