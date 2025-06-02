@@ -1,5 +1,3 @@
-# Complete pipeline: unify sampling rate, pad to 1s, spatialize signal, add spatialized noise
-
 import numpy as np
 import soundfile as sf
 import librosa
@@ -7,8 +5,6 @@ from scipy.signal import fftconvolve
 import h5py
 import os
 import random
-
-# ---------------------- Signal utilities ----------------------
 def resample_to_44100(signal, sr):
     if sr != 44100:
         signal = librosa.resample(signal, orig_sr=sr, target_sr=44100)
@@ -24,7 +20,6 @@ def pad_to_1s(signal, target_len=44100):
 def normalize(sig):
     return sig / (np.max(np.abs(sig)) + 1e-9)
 
-# ---------------------- HRTF loading and interpolation ----------------------
 def load_hrtf_from_sofa(sofa_path):
     with h5py.File(sofa_path, 'r') as f:
         hrir = f['Data.IR'][:]            # shape: [N, 2, T]
@@ -49,7 +44,6 @@ def binaural_hrtf_convolve(signal, hrir_l, hrir_r):
     right = fftconvolve(signal, hrir_r, mode='full')[:len(signal)]
     return np.stack([left, right], axis=-1)
 
-# ---------------------- Main spatialization + mixing ----------------------
 def spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths=None, snr_db=10):
     # 1. Load and preprocess main signal
     signal, sr = sf.read(signal_path)
@@ -85,14 +79,13 @@ def spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths=No
     out = normalize(out)
     return out, 44100
 
-# ---------------------- Example usage ----------------------
 if __name__ == '__main__':
-    signal_path = '/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Data_Gen/2.wav'
-    bg_paths = ['/Users/mousei/PycharmProjects/Final Project/Audio/airplane_1.wav',
-                '/Users/mousei/PycharmProjects/Final Project/Audio/airplane_2.wav']
+    signal_path = '/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Test_Audio/2.wav'
+    bg_paths = ['/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Test_Audio/airplane_1.wav',
+                '/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Test_Audio/airplane_2.wav']
     sofa_file = '/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/cipic_sofa_all/subject_003.sofa'
     target_azimuth = 90
     bg_azimuths = [30, 210]  # or None for random
 
-    output, sr = spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths, snr_db=-5)
-    sf.write('output_mixed_snr=-5dB.wav', output, sr)
+    output, sr = spatial_mix(signal_path, bg_paths, sofa_file, target_azimuth, bg_azimuths, snr_db=15)
+    sf.write('output_mixed_snr=15dB.wav', output, sr)

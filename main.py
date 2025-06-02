@@ -24,7 +24,7 @@ def main():
         order of gammatone filter: 4
     """
 
-    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Data_Gen/output_mixed_snr=0dB.wav')
+    signal, fs = load_audio('/Users/mousei/PycharmProjects/Final Project/SoundSourceLocalization/Data_Gen/output_mixed_snr=15dB.wav')
     filter_type = 'Gammatone'
     cfs = gt_filters.centre_freqs(cutoff=80, fs=fs, num_freqs=32)
 
