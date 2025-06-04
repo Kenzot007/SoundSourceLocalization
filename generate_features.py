@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, cpu_count
+from tqdm import tqdm
 
 # 路径设置
 dataset_dir = r'C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\Dataset'
@@ -51,42 +52,47 @@ def process_one_audio_file(filename):
         itd, ild, ic = cues["itd"], cues["ild"], cues["ic"]
 
         # 保存特征文件
-        np.savez_compressed(feature_path, itd=itd, ild=ild, ic=ic)
+        np.savez_compressed(
+                    feature_path,
+                    itd=itd.astype(np.float32),
+                    ild=ild.astype(np.float32),
+                    ic=ic.astype(np.float32)
+                    )
 
-        # 可视化
-        itd_plot = np.log1p(np.abs(itd)) * np.sign(itd)
-        ild_plot = np.log1p(np.abs(ild)) * np.sign(ild)
-        ic_plot = np.log1p(np.abs(ic)) * np.sign(ic)
+        # # 可视化
+        # itd_plot = np.log1p(np.abs(itd)) * np.sign(itd)
+        # ild_plot = np.log1p(np.abs(ild)) * np.sign(ild)
+        # ic_plot = np.log1p(np.abs(ic)) * np.sign(ic)
 
-        plt.figure(figsize=(10, 4))
-        im_itd = plt.imshow(itd_plot, aspect='auto', cmap='coolwarm', origin='lower')
-        plt.title("ITD Cochleagram", fontsize=16)
-        plt.ylabel("Filter #", fontsize=14)
-        plt.xlabel("Time", fontsize=14)
-        plt.colorbar(im_itd)
-        image_itds_path = os.path.join(image_itds_save_dir, filename.replace(".wav", "_itd.png"))
-        plt.savefig(image_itds_path)
-        plt.close()
+        # plt.figure(figsize=(10, 4))
+        # im_itd = plt.imshow(itd_plot, aspect='auto', cmap='coolwarm', origin='lower')
+        # plt.title("ITD Cochleagram", fontsize=16)
+        # plt.ylabel("Filter #", fontsize=14)
+        # plt.xlabel("Time", fontsize=14)
+        # plt.colorbar(im_itd)
+        # image_itds_path = os.path.join(image_itds_save_dir, filename.replace(".wav", "_itd.png"))
+        # plt.savefig(image_itds_path)
+        # plt.close()
 
-        plt.figure(figsize=(10, 4))
-        im_ild = plt.imshow(ild_plot, aspect='auto', cmap='coolwarm', origin='lower')
-        plt.title("ILD Cochleagram", fontsize=16)
-        plt.ylabel("Filter #", fontsize=14)
-        plt.xlabel("Time", fontsize=14)
-        plt.colorbar(im_ild)
-        image_ilds_path = os.path.join(image_ilds_save_dir, filename.replace(".wav", "_ild.png"))
-        plt.savefig(image_ilds_path)
-        plt.close()
+        # plt.figure(figsize=(10, 4))
+        # im_ild = plt.imshow(ild_plot, aspect='auto', cmap='coolwarm', origin='lower')
+        # plt.title("ILD Cochleagram", fontsize=16)
+        # plt.ylabel("Filter #", fontsize=14)
+        # plt.xlabel("Time", fontsize=14)
+        # plt.colorbar(im_ild)
+        # image_ilds_path = os.path.join(image_ilds_save_dir, filename.replace(".wav", "_ild.png"))
+        # plt.savefig(image_ilds_path)
+        # plt.close()
 
-        plt.figure(figsize=(10, 4))
-        im_ic = plt.imshow(ic_plot, aspect='auto', cmap='viridis', origin='lower', vmin=0, vmax=1)
-        plt.title("IC Cochleagram", fontsize=16)
-        plt.ylabel("Filter #", fontsize=14)
-        plt.xlabel("Time", fontsize=14)
-        plt.colorbar(im_ic)
-        image_ics_path = os.path.join(image_ics_save_dir, filename.replace(".wav", "_ic.png"))
-        plt.savefig(image_ics_path)
-        plt.close()
+        # plt.figure(figsize=(10, 4))
+        # im_ic = plt.imshow(ic_plot, aspect='auto', cmap='viridis', origin='lower', vmin=0, vmax=1)
+        # plt.title("IC Cochleagram", fontsize=16)
+        # plt.ylabel("Filter #", fontsize=14)
+        # plt.xlabel("Time", fontsize=14)
+        # plt.colorbar(im_ic)
+        # image_ics_path = os.path.join(image_ics_save_dir, filename.replace(".wav", "_ic.png"))
+        # plt.savefig(image_ics_path)
+        # plt.close()
         
 
         print(f"{filename} 已处理完成。")
@@ -97,5 +103,8 @@ def process_one_audio_file(filename):
 if __name__ == '__main__':
     num_workers = min(cpu_count(), 16)  # 控制最大线程数
     with Pool(num_workers) as pool:
-        pool.map(process_one_audio_file, audio_files)
+        for _ in tqdm(pool.imap_unordered(process_one_audio_file, audio_files),
+                      total=len(audio_files),
+                      desc="处理音频文件"):
+            pass
     print("所有音频处理完成 ✅")

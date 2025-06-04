@@ -21,7 +21,7 @@ print("Device name:", torch.cuda.get_device_name(0))
 
 # Load audio file
 def load_audio(file_path):
-    data, fs = sf.read(file_path)
+    d-+ata, fs = sf.read(file_path)
     print(f"Loaded {file_path} with {len(data)} samples.")
     return data, fs
 
