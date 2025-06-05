@@ -100,7 +100,7 @@ train_dataset = BinauralCueDataset(r"C:\Users\TIANY1\OneDrive - Trinity College 
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 
 model = AzimuthResNetCNN(num_classes=72).cuda()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.02)
 criterion = nn.CrossEntropyLoss()
 
 print("模型所在设备：", next(model.parameters()).device)
@@ -121,3 +121,5 @@ for epoch in range(20):
         pbar.set_postfix(loss=loss.item())
 
     print(f"✅ Epoch {epoch+1} 完成，总损失: {total_loss:.4f}")
+.
+-
