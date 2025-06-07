@@ -19,16 +19,28 @@ os.makedirs(image_ilds_save_dir, exist_ok=True)
 os.makedirs(image_itds_save_dir, exist_ok=True)
 os.makedirs(image_ics_save_dir, exist_ok=True)
 
+bad_filenames = [
+    "main_audio_109_azi290.wav",
+    "main_audio_119_azi290.wav",
+    "main_audio_139_azi275.wav",
+    "main_audio_159_azi250.wav",
+    "main_audio_179_azi235.wav",
+    "main_audio_238_azi175.wav",
+    "main_audio_248_azi170.wav"
+]
+
+audio_files = bad_filenames
+
 # 文件列表
-audio_files = sorted([f for f in os.listdir(dataset_dir) if f.endswith('.wav')])
+# audio_files = sorted([f for f in os.listdir(dataset_dir) if f.endswith('.wav')])
 
 # 并行处理的函数（必须是顶层函数）
 def process_one_audio_file(filename):
     try:
         feature_path = os.path.join(feature_save_dir, filename.replace('.wav', '.npz'))
-        if os.path.exists(feature_path):
-            print(f"⏭️ 已存在，跳过：{filename}")
-            return
+        # if os.path.exists(feature_path):
+        #     print(f"⏭️ 已存在，跳过：{filename}")
+        #     return
         
         filepath = os.path.join(dataset_dir, filename)
         signal, fs = sf.read(filepath)
