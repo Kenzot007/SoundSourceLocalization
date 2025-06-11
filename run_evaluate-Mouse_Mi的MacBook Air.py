@@ -2,7 +2,6 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import numpy as np
 import glob
-import random
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -139,16 +138,14 @@ class SoundLocalizationModel(nn.Module):
         # 模型输出为未归一化的得分，可在需要时使用 Softmax 做归一化:
         # probs = torch.softmax(logits, dim=1)
         return logits
-
-random.seed(42)
-random_ids = random.sample(range(1, 701), 140)
+    
 full_dataset = BinauralCueDataset(r"C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\features")
 train_dataset, val_dataset = random_split(full_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(42))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("The device type is: ", device)
 model = model = SoundLocalizationModel(num_classes=72, input_channels_per_cue=32, conv_channels=64, kernel_size=5,
-                               stride=1, num_layers=2, embed_dim=64, num_heads=4, use_batchnorm=True).to(device)
+                           stride=1, num_layers=2, embed_dim=64, num_heads=4, use_batchnorm=True).to(device)
 model_path = r"C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\checkpoints\model2\epoch_20.pth"
 checkpoint = torch.load(model_path, map_location=device)
 model.load_state_dict(checkpoint["model_state_dict"])
@@ -156,7 +153,7 @@ model.eval()
 
 
 val_path = r"C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\features"
-val_dataset = BinauralCueDataset(val_path, audio_ids=random_ids)
+val_dataset = BinauralCueDataset(val_path, audio_ids=range(561, 701))
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 
@@ -174,7 +171,7 @@ all_preds = np.array(all_preds)
 all_labels = np.array(all_labels)
 
 accuracy = np.mean(all_preds == all_labels)
-print(f"Top-1 Accuracy: {accuracy * 100:.2f}%")
+print(f"🎯 Top-1 Accuracy: {accuracy * 100:.2f}%")
 
 def mean_class_accuracy(y_true, y_pred, num_classes=72):
     class_accs = []
@@ -186,7 +183,7 @@ def mean_class_accuracy(y_true, y_pred, num_classes=72):
     return np.mean(class_accs)
 
 mean_acc = mean_class_accuracy(all_labels, all_preds)
-print(f"Mean Accuracy per Class: {mean_acc * 100:.2f}%")
+print(f"📊 Mean Accuracy per Class: {mean_acc * 100:.2f}%")
 
 from sklearn.metrics import classification_report
 print(classification_report(all_labels, all_preds, digits=3))

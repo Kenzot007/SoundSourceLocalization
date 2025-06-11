@@ -141,7 +141,7 @@ class SoundLocalizationModel(nn.Module):
         return logits
 
 random.seed(42)
-random_ids = random.sample(range(1, 701), 140)
+random_ids = random.sample(range)
 full_dataset = BinauralCueDataset(r"C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\features")
 train_dataset, val_dataset = random_split(full_dataset, [0.8, 0.2], generator=torch.Generator().manual_seed(42))
 
@@ -156,7 +156,7 @@ model.eval()
 
 
 val_path = r"C:\Users\TIANY1\OneDrive - Trinity College Dublin\Documents\SoundSourceLocalization\features"
-val_dataset = BinauralCueDataset(val_path, audio_ids=random_ids)
+val_dataset = BinauralCueDataset(val_path, audio_ids=range(561, 701))
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 
