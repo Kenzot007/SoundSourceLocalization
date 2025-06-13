@@ -108,3 +108,15 @@ Epoch 18/20: Train Loss=1.6484, Top-1=44.03%, Top-5=94.96% | Evaluation Loss=1.7
 Epoch 19/20: Train Loss=1.6231, Top-1=44.78%, Top-5=95.28% | Evaluation Loss=1.7002, Top-1=42.18%, Top-5=94.16%
 
 Epoch 20/20: Train Loss=1.6008, Top-1=45.39%, Top-5=95.31% | Evaluation Loss=1.6856, Top-1=43.49%, Top-5=94.51%
+
+Reduced Learning rate from epoch 16.
+
+Epoch 17/40: Train Loss=1.5311, Top-1=47.5%, Top-5=95.82% | Evaluation Loss=1.3605, Top-1=53.53%, Top-5=96.86%
+
+Epoch 18/40: Train Loss=1.5182, Top-1=48.17%, Top-5=95.86% | Evaluation Loss=1.3565, Top-1=53.42%, Top-5=96.43%
+
+Epoch 19/40: Train Loss=1.4850, Top-1=49.26%, Top-5=95.99% | Evaluation Loss=1.3579, Top-1=53.70%, Top-5=96.63%
+
+Epoch 20/40: Train Loss=1.4637, Top-1=49.70%, Top-5=96.25% | Evaluation Loss=1.3067, Top-1=54.98%, Top-5=97.44%
+
+![image](https://github.com/user-attachments/assets/f18be047-9476-490b-80fb-620d97738ada)
