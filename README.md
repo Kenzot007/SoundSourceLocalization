@@ -199,4 +199,110 @@ Epoch 59/60: Train Loss=1.1210, Top-1=61.18%, Top-5=97.95% | Evaluation Loss=1.0
 
 Epoch 60/60: Train Loss=1.1188, Top-1=61.42%, Top-5=97.87% | Evaluation Loss=1.0610, Top-1=64.49%, Top-5=98.20%
 
+Epoch 68/120: Train Loss=1.0420, Top-1=64.17%, Top-5=83.72% | Evaluation Loss=0.9489, Top-1=68.70%, Top-5=86.55%
+
+Epoch 69/120: Train Loss=1.0328, Top-1=64.28%, Top-5=83.78% | Evaluation Loss=0.9250, Top-1=69.78%, Top-5=86.98%
+
+Epoch 70/120: Train Loss=1.0354, Top-1=64.19%, Top-5=83.67% | Evaluation Loss=0.9442, Top-1=68.49%, Top-5=86.27%
+
+Epoch 71/120: Train Loss=1.0240, Top-1=64.57%, Top-5=83.97% | Evaluation Loss=0.9358, Top-1=69.39%, Top-5=86.94%
+
+Epoch 72/120: Train Loss=1.0113, Top-1=65.08%, Top-5=83.98% | Evaluation Loss=0.9386, Top-1=68.72%, Top-5=87.20%
+
+Epoch 73/120: Train Loss=1.0065, Top-1=65.11%, Top-5=84.25% | Evaluation Loss=0.9395, Top-1=69.59%, Top-5=87.19%
+
+Epoch 74/120: Train Loss=1.0054, Top-1=65.19%, Top-5=84.11% | Evaluation Loss=0.9036, Top-1=70.71%, Top-5=87.66%
+
+Epoch 75/120: Train Loss=0.9981, Top-1=65.46%, Top-5=84.45% | Evaluation Loss=0.9280, Top-1=69.74%, Top-5=87.25%
+
+Epoch 76/120: Train Loss=0.9880, Top-1=65.65%, Top-5=84.40% | Evaluation Loss=0.9025, Top-1=70.71%, Top-5=87.75%
+
+Epoch 77/120: Train Loss=0.9827, Top-1=65.91%, Top-5=84.63% | Evaluation Loss=0.8902, Top-1=71.27%, Top-5=87.88%
+
+Epoch 78/120: Train Loss=0.9812, Top-1=66.10%, Top-5=84.65% | Evaluation Loss=0.9030, Top-1=71.22%, Top-5=87.53%
+
+Epoch 79/120: Train Loss=0.9773, Top-1=66.40%, Top-5=84.82% | Evaluation Loss=0.9110, Top-1=70.94%, Top-5=87.22%
+
+Epoch 80/120: Train Loss=0.9681, Top-1=66.55%, Top-5=84.80% | Evaluation Loss=0.9028, Top-1=70.59%, Top-5=87.36%
+
+Epoch 81/120: Train Loss=0.9736, Top-1=66.58%, Top-5=84.81% | Evaluation Loss=0.8770, Top-1=71.81%, Top-5=88.01%
+
+Epoch 82/120: Train Loss=0.9524, Top-1=66.96%, Top-5=85.30% | Evaluation Loss=0.8914, Top-1=70.96%, Top-5=88.05%
+
+Epoch 83/120: Train Loss=0.9530, Top-1=66.94%, Top-5=85.09% | Evaluation Loss=0.8740, Top-1=71.30%, Top-5=88.13%
+
+Epoch 84/120: Train Loss=0.9465, Top-1=67.03%, Top-5=85.04% | Evaluation Loss=0.9114, Top-1=70.63%, Top-5=87.41%
+
+Epoch 85/120: Train Loss=0.9432, Top-1=67.11%, Top-5=85.16% | Evaluation Loss=0.8826, Top-1=71.66%, Top-5=88.18%
+
+Epoch 86/120: Train Loss=0.9345, Top-1=67.83%, Top-5=85.49% | Evaluation Loss=0.8728, Top-1=71.75%, Top-5=88.37%
+
+Epoch 87/120: Train Loss=0.9317, Top-1=67.62%, Top-5=85.34% | Evaluation Loss=0.8706, Top-1=72.22%, Top-5=88.14%
+
+Epoch 88/120: Train Loss=0.9218, Top-1=67.99%, Top-5=85.53% | Evaluation Loss=0.8602, Top-1=72.73%, Top-5=88.69%
+
+Epoch 89/120: Train Loss=0.9175, Top-1=68.20%, Top-5=85.73% | Evaluation Loss=0.8652, Top-1=72.22%, Top-5=88.35%
+
+Epoch 90/120: Train Loss=0.9215, Top-1=68.08%, Top-5=85.54% | Evaluation Loss=0.8778, Top-1=71.74%, Top-5=87.96%
+
+Epoch 91/120: Train Loss=0.9085, Top-1=68.43%, Top-5=85.78% | Evaluation Loss=0.8629, Top-1=72.45%, Top-5=88.41%
+
+Epoch 92/120: Train Loss=0.9046, Top-1=68.52%, Top-5=85.87% | Evaluation Loss=0.8846, Top-1=71.16%, Top-5=88.07%
+
+Epoch 93/120: Train Loss=0.8990, Top-1=68.93%, Top-5=86.07% | Evaluation Loss=0.8467, Top-1=73.48%, Top-5=88.97%
+
+Epoch 94/120: Train Loss=0.8974, Top-1=69.15%, Top-5=86.12% | Evaluation Loss=0.8824, Top-1=71.50%, Top-5=88.36%
+
+Epoch 95/120: Train Loss=0.9002, Top-1=69.09%, Top-5=86.03% | Evaluation Loss=0.8492, Top-1=72.98%, Top-5=88.99%
+
+Epoch 96/120: Train Loss=0.8849, Top-1=69.44%, Top-5=86.20% | Evaluation Loss=0.8390, Top-1=73.32%, Top-5=88.89%
+
+Epoch 97/120: Train Loss=0.8876, Top-1=69.01%, Top-5=86.04% | Evaluation Loss=0.8472, Top-1=72.94%, Top-5=88.73%
+
+Epoch 98/120: Train Loss=0.8928, Top-1=68.99%, Top-5=86.02% | Evaluation Loss=0.8469, Top-1=73.23%, Top-5=88.81%
+
+Epoch 99/120: Train Loss=0.8742, Top-1=70.00%, Top-5=86.25% | Evaluation Loss=0.8467, Top-1=73.19%, Top-5=88.95%
+
+Epoch 100/120: Train Loss=0.8815, Top-1=69.58%, Top-5=86.20% | Evaluation Loss=0.8457, Top-1=73.28%, Top-5=88.76%
+
+Epoch 101/120: Train Loss=0.8771, Top-1=69.83%, Top-5=86.57% | Evaluation Loss=0.8459, Top-1=73.31%, Top-5=88.69%
+
+Epoch 102/120: Train Loss=0.8706, Top-1=70.01%, Top-5=86.41% | Evaluation Loss=0.8379, Top-1=73.67%, Top-5=89.01%
+
+Epoch 103/120: Train Loss=0.8648, Top-1=70.11%, Top-5=86.70% | Evaluation Loss=0.8407, Top-1=73.64%, Top-5=88.98%
+
+Epoch 104/120: Train Loss=0.8641, Top-1=70.08%, Top-5=86.59% | Evaluation Loss=0.8357, Top-1=73.55%, Top-5=88.95%
+
+Epoch 105/120: Train Loss=0.8586, Top-1=70.20%, Top-5=86.58% | Evaluation Loss=0.8360, Top-1=73.61%, Top-5=88.77%
+
+Epoch 106/120: Train Loss=0.8578, Top-1=70.41%, Top-5=86.63% | Evaluation Loss=0.8229, Top-1=74.28%, Top-5=89.30%
+
+Epoch 107/120: Train Loss=0.8628, Top-1=70.17%, Top-5=86.63% | Evaluation Loss=0.8296, Top-1=74.05%, Top-5=89.16%
+
+Epoch 108/120: Train Loss=0.8598, Top-1=70.40%, Top-5=86.62% | Evaluation Loss=0.8297, Top-1=74.08%, Top-5=89.20%
+
+Epoch 109/120: Train Loss=0.8625, Top-1=70.22%, Top-5=86.69% | Evaluation Loss=0.8553, Top-1=73.15%, Top-5=88.78%
+
+Epoch 110/120: Train Loss=0.8550, Top-1=70.62%, Top-5=86.69% | Evaluation Loss=0.8292, Top-1=73.88%, Top-5=89.01%
+
+Epoch 111/120: Train Loss=0.8547, Top-1=70.61%, Top-5=86.80% | Evaluation Loss=0.8241, Top-1=74.08%, Top-5=89.03%
+
+Epoch 112/120: Train Loss=0.8503, Top-1=70.62%, Top-5=86.86% | Evaluation Loss=0.8314, Top-1=74.09%, Top-5=88.98%
+
+Epoch 113/120: Train Loss=0.8453, Top-1=70.90%, Top-5=87.00% | Evaluation Loss=0.8216, Top-1=74.33%, Top-5=89.31%
+
+Epoch 114/120: Train Loss=0.8463, Top-1=70.87%, Top-5=86.90% | Evaluation Loss=0.8390, Top-1=73.76%, Top-5=89.17%
+
+Epoch 115/120: Train Loss=0.8443, Top-1=70.89%, Top-5=86.79% | Evaluation Loss=0.8312, Top-1=74.14%, Top-5=89.17%
+
+Epoch 116/120: Train Loss=0.8470, Top-1=70.77%, Top-5=86.75% | Evaluation Loss=0.8360, Top-1=74.02%, Top-5=89.03%
+
+Epoch 117/120: Train Loss=0.8461, Top-1=70.90%, Top-5=87.05% | Evaluation Loss=0.8197, Top-1=74.53%, Top-5=89.44%
+
+Epoch 118/120: Train Loss=0.8417, Top-1=71.10%, Top-5=87.01% | Evaluation Loss=0.8405, Top-1=73.54%, Top-5=88.81%
+
+Epoch 119/120: Train Loss=0.8428, Top-1=70.71%, Top-5=86.84% | Evaluation Loss=0.8269, Top-1=74.50%, Top-5=89.31%
+
+Epoch 120/120: Train Loss=0.8445, Top-1=70.92%, Top-5=86.95% | Evaluation Loss=0.8216, Top-1=74.49%, Top-5=89.19%
+
 ![image](https://github.com/user-attachments/assets/f18be047-9476-490b-80fb-620d97738ada)
