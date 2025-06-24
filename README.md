@@ -305,4 +305,5 @@ Epoch 119/120: Train Loss=0.8428, Top-1=70.71%, Top-5=86.84% | Evaluation Loss=0
 
 Epoch 120/120: Train Loss=0.8445, Top-1=70.92%, Top-5=86.95% | Evaluation Loss=0.8216, Top-1=74.49%, Top-5=89.19%
 
-![image](https://github.com/user-attachments/assets/f18be047-9476-490b-80fb-620d97738ada)
+![image](https://github.com/user-attachments/assets/d9056abc-0f77-47ab-8372-0e8bf6c36a66)
+
