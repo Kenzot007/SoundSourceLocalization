@@ -307,3 +307,14 @@ Epoch 120/120: Train Loss=0.8445, Top-1=70.92%, Top-5=86.95% | Evaluation Loss=0
 
 ![image](https://github.com/user-attachments/assets/d9056abc-0f77-47ab-8372-0e8bf6c36a66)
 
+errors between true label and predicted label, (true label = 355)
+[  0   0   0 175 105   0   0   0   0   0   0   0   0   0   0 170   5   0
+  10   5   0   0 170 165   0   0   0   0   0   0   0   0   0   0   0   0
+   0   5   0   0  10   0   0   0   0   0  10   0 165   5   0   0   0   5
+   0   0   0   0   5   0   0   0   5   0 160   0   0   0   5   5   0   0
+   0   5   5   0   5   0   5 170   0   0   0 180   0   0   0   5   0   0
+ 170   0   0 170   0   0   0   0   0   0 175   0   0   0   0   0   0   0
+   0   0   5   0   0   0 165   0   0   0   0   0   5 175   0   0  10   0
+   0 175  65   5   0   0   0   5   0   0   0   5   0   5]
+140
+
